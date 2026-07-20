@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floor Ops — Manufacturing Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171a;
+    --panel:#1b1f23;
+    --panel-raised:#20252a;
+    --line:#31373d;
+    --line-soft:#262b30;
+    --text:#e9e6de;
+    --text-muted:#8b9198;
+    --amber:#f2a63a;
+    --amber-dim:#7a5a26;
+    --red:#e0483c;
+    --green:#4fa876;
+    --blue:#4f8fe0;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 800px at 15% -10%, #1c2126 0%, var(--bg) 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  ::selection{ background:var(--amber); color:#1a1300; }
+
+  /* ---------- Login screen ---------- */
+  #loginScreen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .login-card{
+    width:100%;
+    max-width:380px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:36px 32px 30px;
+    position:relative;
+    overflow:hidden;
+  }
+  .login-card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:repeating-linear-gradient(90deg,var(--amber) 0 14px, transparent 14px 20px);
+    opacity:.8;
+  }
+  .login-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .login-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:26px;
+    margin:0 0 4px;
+    letter-spacing:-.01em;
+  }
+  .login-sub{
+    color:var(--text-muted);
+    font-size:13px;
+    margin:0 0 26px;
+    line-height:1.5;
+  }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    background:#121517;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    padding:11px 12px;
+    border-radius:var(--radius);
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus{ border-color:var(--amber); }
+  .btn{
+    width:100%;
+    background:var(--amber);
+    color:#1a1300;
+    border:none;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:.02em;
+    padding:12px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:filter .15s, transform .05s;
+    margin-top:6px;
+  }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn:active{ transform:translateY(1px); }
+  .btn:focus-visible, a:focus-visible, input:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  .login-error{
+    color:var(--red);
+    font-size:12.5px;
+    font-family:'IBM Plex Mono',monospace;
+    margin-top:12px;
+    min-height:16px;
+  }
+  .login-demo{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid var(--line-soft);
+    font-size:11.5px;
+    color:var(--text-muted);
+    font-family:'IBM Plex Mono',monospace;
+    line-height:1.7;
+  }
+  .login-demo b{ color:var(--text); }
+  .login-demo button{
+    background:none;border:none;color:var(--blue);cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-decoration:underline;
+    padding:0;
+  }
+
+  /* ---------- Dashboard shell ---------- */
+  #dashboard{ display:none; }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 24px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+    position:sticky; top:0; z-index:10;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .topbar-left{ display:flex; align-items:center; gap:12px; }
+  .led{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+    flex-shrink:0;
+  }
+  .led.offline{ background:var(--red); box-shadow:0 0 8px var(--red); }
+  .led.demo{ background:var(--amber); box-shadow:0 0 8px var(--amber); }
+  .brand{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:-.01em;
+  }
+  .brand span{ color:var(--amber); }
+  .topbar-mid{
+    display:flex; align-items:center; gap:22px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--text-muted);
+  }
+  .topbar-mid .clock{ color:var(--text); font-size:13px; letter-spacing:.03em; }
+  .shift-pill{
+    border:1px solid var(--line);
+    padding:4px 10px;
+    border-radius:20px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    font-size:10.5px;
+  }
+  .topbar-right{ display:flex; align-items:center; gap:14px; }
+  .topbar-right select{
+    background:#121517; color:var(--text); border:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 8px; border-radius:var(--radius);
+  }
+  .logout-btn{
+    background:none; border:1px solid var(--line); color:var(--text-muted);
+    font-family:'IBM Plex Mono',monospace; font-size:11px; padding:7px 12px;
+    border-radius:var(--radius); cursor:pointer; text-transform:uppercase; letter-spacing:.05em;
+  }
+  .logout-btn:hover{ border-color:var(--red); color:var(--red); }
+
+  .demo-banner{
+    background:#2a2410; color:var(--amber); border-bottom:1px solid var(--amber-dim);
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    padding:8px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .demo-banner button{
+    background:none;border:1px solid var(--amber-dim); color:var(--amber);
+    padding:4px 10px; border-radius:var(--radius); cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11px;
+  }
+
+  main{ padding:22px 24px 60px; max-width:1400px; margin:0 auto; }
+
+  .section-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin:30px 0 12px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-label::after{ content:""; flex:1; height:1px; background:var(--line-soft); }
+  .section-label:first-child{ margin-top:0; }
+
+  /* ---------- KPI strip ---------- */
+  .kpi-strip{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .kpi-cell{
+    background:var(--panel);
+    padding:16px 18px;
+    min-width:0;
+  }
+  .kpi-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:8px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .kpi-value{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:28px;
+    line-height:1;
+  }
+  .kpi-value small{ font-size:14px; color:var(--text-muted); font-weight:500; margin-left:2px; }
+  .kpi-value.amber{ color:var(--amber); }
+  .kpi-value.red{ color:var(--red); }
+  .kpi-value.green{ color:var(--green); }
+
+  /* ---------- Machine gauge grid ---------- */
+  .gauge-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(210px,1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .gauge-card{
+    background:var(--panel);
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .gauge-name{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    text-align:center;
+    line-height:1.3;
+  }
+  .gauge-status{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding:2px 8px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    color:var(--text-muted);
+  }
+  .gauge-status.running{ color:var(--green); border-color:#2c5a41; }
+  .gauge-status.down{ color:var(--red); border-color:#5a2c27; }
+  .gauge-status.idle,.gauge-status.offline{ color:var(--text-muted); }
+  .gauge-status.maintenance{ color:var(--amber); border-color:var(--amber-dim); }
+  .gauge-legend{
+    display:flex; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--text-muted);
+    flex-wrap:wrap; justify-content:center;
+  }
+  .gauge-legend span{ display:flex; align-items:center; gap:4px; }
+  .dot{ width:6px;height:6px;border-radius:50%; display:inline-block; }
+
+  /* ---------- Charts row ---------- */
+  .charts-row{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .chart-card{ background:var(--panel); padding:18px 20px 12px; min-width:0; }
+  .chart-title{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px; margin-bottom:2px;
+  }
+  .chart-sub{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-muted); margin-bottom:14px; }
+  .chart-empty{ color:var(--text-muted); font-family:'IBM Plex Mono',monospace; font-size:12px; padding:30px 0; text-align:center; }
+
+  /* ---------- Tables row ---------- */
+  .tables-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .table-card{ background:var(--panel); padding:18px 20px 8px; min-width:0; overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  thead th{
+    text-align:left;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    border-bottom:1px solid var(--line);
+    padding:0 10px 9px 0;
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:9px 10px 9px 0;
+    border-bottom:1px solid var(--line-soft);
+    font-family:'IBM Plex Mono',monospace;
+    white-space:nowrap;
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  .sev{
+    display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px;
+    text-transform:uppercase; letter-spacing:.05em;
+    border:1px solid var(--line);
+  }
+  .sev.minor{ color:var(--text-muted); }
+  .sev.major{ color:var(--amber); border-color:var(--amber-dim); }
+  .sev.critical{ color:var(--red); border-color:#5a2c27; }
+
+  .data-entry-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-top:12px;
+  }
+  .data-entry-card{ background:var(--panel); padding:18px 20px; }
+  .data-entry-card h3{ margin:0 0 10px; font-family:'Space Grotesk',sans-serif; font-size:14px; }
+  .data-entry-form{ display:grid; gap:10px; }
+  .data-entry-form .field-row{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+  .data-entry-form label{ display:grid; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted); }
+  .data-entry-form input, .data-entry-form select, .data-entry-form button{ width:100%; background:#121517; border:1px solid var(--line); color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:12px; padding:9px 10px; border-radius:var(--radius); }
+  .data-entry-form button{ background:var(--amber); color:#1a1300; border:none; cursor:pointer; font-weight:600; }
+  .data-entry-help{ margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-muted); line-height:1.6; }
+  .import-panel{ margin-top:12px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; }
+  .import-panel input[type="file"]{ flex:1; min-width:220px; background:#121517; border:1px solid var(--line); color:var(--text); padding:9px 10px; border-radius:var(--radius); }
+  .import-panel button{ background:var(--blue); color:#fff; border:none; padding:9px 12px; border-radius:var(--radius); cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  .status-text{ font-family:'IBM Plex Mono',monospace; font-size:11px; margin-top:8px; color:var(--amber); min-height:16px; }
+  .status-text.error{ color:var(--red); }
+
+  footer{
+    text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    color:var(--text-muted);
+    padding:30px 24px 40px;
+  }
+
+  @media (max-width: 900px){
+    .kpi-strip{ grid-template-columns:repeat(2,1fr); }
+    .charts-row, .tables-row{ grid-template-columns:1fr; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========================= LOGIN SCREEN ========================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-eyebrow">Floor Ops · Access Control</div>
+    <h1 class="login-title">Sign in to the line</h1>
+    <p class="login-sub">Authenticate to view live OEE, downtime, and quality data across the plant.</p>
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" required autocomplete="username" placeholder="e.g. manager">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" required autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button class="btn" type="submit">Sign in</button>
+      <div class="login-error" id="loginError"></div>
+    </form>
+    <div class="login-demo">
+      Backend not running or credentials not seeded yet?
+      <button id="demoBtn" type="button">Continue with demo data →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= DASHBOARD ========================= -->
+<div id="dashboard">
+
+  <div class="demo-banner" id="demoBanner" style="display:none;">
+    <span>⚠ Showing demo data — the API at <code id="apiBaseLabel"></code> couldn't be reached (or endpoints differ from the ones this page assumes). See the ENDPOINTS config at the top of the script.</span>
+    <button id="retryBtn">Retry connection</button>
+  </div>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="led" id="connLed"></span>
+      <span class="brand">FLOOR<span>OPS</span></span>
+    </div>
+    <div class="topbar-mid">
+      <span class="clock" id="clock">--:--:--</span>
+      <span class="shift-pill" id="shiftPill">— SHIFT</span>
+    </div>
+    <div class="topbar-right">
+      <select id="rangeSelect">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-muted);" id="userLabel"></span>
+      <button class="logout-btn" id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="section-label">Plant KPIs</div>
+    <div class="kpi-strip" id="kpiStrip"></div>
+
+    <div class="section-label">Machine OEE — Availability · Performance · Quality</div>
+    <div class="gauge-grid" id="gaugeGrid"></div>
+
+    <div class="section-label">Downtime &amp; Production Trend</div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Downtime pareto</div>
+        <div class="chart-sub">Minutes lost by category, selected range</div>
+        <div id="paretoChart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Production trend</div>
+        <div class="chart-sub">Units produced vs. target, daily</div>
+        <div id="trendChart"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Shift Performance &amp; Quality</div>
+    <div class="tables-row">
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Shift</th><th>Units produced</th><th>Rejected</th><th>Avg / record</th></tr></thead>
+          <tbody id="shiftTableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Defect type</th><th>Severity</th><th>Scrapped</th><th>Reworked</th></tr></thead>
+          <tbody id="qualityTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-label">Manage Shift &amp; Quality Data</div>
+    <div class="data-entry-grid">
+      <div class="data-entry-card">
+        <h3>Add Shift Performance</h3>
+        <form id="shiftDataForm" class="data-entry-form">
+          <div class="field-row">
+            <label>Shift
+              <select id="shiftEntryShift" required>
+                <option value="day">Day</option>
+                <option value="evening">Evening</option>
+                <option value="night">Night</option>
+              </select>
+            </label>
+            <label>Units produced
+              <input id="shiftEntryProduced" type="number" min="0" step="1" required>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Units rejected
+              <input id="shiftEntryRejected" type="number" min="0" step="1" required>
+            </label>
+            <label>Avg / record
+              <input id="shiftEntryAvg" type="number" min="0" step="1" required>
+            </label>
+          </div>
+          <button type="submit">Save Shift Record</button>
+        </form>
+        <div class="data-entry-help">These values are stored locally in the browser and will appear in the Shift Performance table immediately.</div>
+      </div>
+      <div class="data-entry-card">
+        <h3>Add Quality Event</h3>
+        <form id="qualityDataForm" class="data-entry-form">
+          <label>Defect type
+            <input id="qualityEntryType" type="text" required placeholder="e.g. Surface finish defect">
+          </label>
+          <div class="field-row">
+            <label>Severity
+              <select id="qualityEntrySeverity" required>
+                <option value="minor">Minor</option>
+                <option value="major">Major</option>
+                <option value="critical">Critical</option>
+              </select>
+            </label>
+            <label>Scrapped
+              <input id="qualityEntryScrapped" type="number" min="0" step="1" required>
+            </label>
+          </div>
+          <label>Reworked
+            <input id="qualityEntryReworked" type="number" min="0" step="1" required>
+          </label>
+          <button type="submit">Save Quality Record</button>
+        </form>
+        <div class="data-entry-help">Use this to add defect events without changing the backend payload.</div>
+      </div>
+    </div>
+
+    <div class="import-panel">
+      <input id="dataImportFile" type="file" accept=".csv,.xlsx,.xls" />
+      <button id="importDataBtn" type="button">Import CSV / Excel</button>
+    </div>
+    <div class="status-text" id="dataImportStatus">Upload a CSV or Excel file with columns for shift or quality data.</div>
+  </main>
+
+  <footer>FLOOROPS — Manufacturing Analytics · SEMI E10 / ISO 22400 aligned</footer>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG — adjust API_BASE and ENDPOINTS to match your actual FastAPI
+   routers (the router files themselves weren't included in the project
+   files this page was built from, so paths below are best-guess
+   conventions based on main.py / analytics.py / schemas.py). If a call
+   fails, the dashboard falls back to demo data and shows a banner.
+   ===================================================================== */
+const CONFIG = {
+  API_BASE: "",   // same-origin by default, e.g. "http://localhost:8000"
+  ENDPOINTS: {
+    login:            "/api/auth/login",              // POST {username,password} -> Token
+    kpiSummary:       "/api/dashboard/kpi-summary",    // GET -> KPISummary
+    oeeAll:           "/api/dashboard/oee",            // GET ?start=&end= -> [OEEResult...]
+    downtimePareto:   "/api/dashboard/downtime-pareto",// GET ?start=&end=
+    productionTrend:  "/api/dashboard/production-trend",// GET ?granularity=day&start=&end=
+    shiftPerformance: "/api/dashboard/shift-performance",// GET ?start=&end=
+    qualitySummary:   "/api/dashboard/quality-summary", // GET ?start=&end=
+    machines:         "/api/machines",                 // GET -> [MachineOut...] (for status)
+  }
+};
+
+let AUTH_TOKEN = null;
+let CURRENT_USER = null;
+let USING_DEMO = false;
+let LAST_LOGIN_ERROR = null;
+
+const $ = (sel) => document.querySelector(sel);
+const SHIFT_DATA_STORAGE_KEY = 'floorops_shift_data';
+const QUALITY_DATA_STORAGE_KEY = 'floorops_quality_data';
+
+function setLoginError(message) {
+  const err = $('#loginError');
+  if (err) err.textContent = message || '';
+  LAST_LOGIN_ERROR = message || null;
+  if (message) console.error('Login failed:', message);
+}
+
+function getDemoCredentials(username, password) {
+  const normalizedUser = (username || '').trim().toLowerCase();
+  const demoUsers = {
+    admin: { password: 'Admin123!', role: 'admin', username: 'admin' },
+    manager: { password: 'Manager123!', role: 'manager', username: 'manager' },
+    technician: { password: 'Tech123!', role: 'technician', username: 'technician' },
+  };
+  const demoUser = demoUsers[normalizedUser];
+  if (!demoUser || demoUser.password !== password) return null;
+  return { access_token: `demo-${demoUser.username}`, role: demoUser.role, username: demoUser.username };
+}
+
+function readStoredRows(key, fallback) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || 'null');
+    return Array.isArray(saved) ? saved : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeStoredRows(key, rows) {
+  localStorage.setItem(key, JSON.stringify(rows));
+}
+
+function normalizeHeader(value) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+function getColumnValue(row, candidates) {
+  const entries = Object.entries(row || {});
+  for (const candidate of candidates) {
+    const match = entries.find(([key]) => normalizeHeader(key) === normalizeHeader(candidate));
+    if (match) return match[1];
+  }
+  return undefined;
+}
+
+function sanitizeShiftRow(row) {
+  const shift = String(getColumnValue(row, ['shift']) || '').trim().toLowerCase();
+  const normalizedShift = ['day', 'evening', 'night'].includes(shift) ? shift : 'day';
+  return {
+    shift: normalizedShift,
+    units_produced: Number(getColumnValue(row, ['units_produced', 'unitsproduced', 'produced']) ?? 0) || 0,
+    units_rejected: Number(getColumnValue(row, ['units_rejected', 'unitsrejected', 'rejected']) ?? 0) || 0,
+    avg_units_per_record: Number(getColumnValue(row, ['avg_units_per_record', 'avg_units_per_record_per_shift', 'avg_per_record']) ?? 0) || 0,
+  };
+}
+
+function sanitizeQualityRow(row) {
+  const severity = String(getColumnValue(row, ['severity']) || '').trim().toLowerCase();
+  return {
+    defect_type: String(getColumnValue(row, ['defect_type', 'defect', 'defect_type_name']) || '').trim() || 'Unspecified',
+    severity: ['minor', 'major', 'critical'].includes(severity) ? severity : 'minor',
+    quantity_scrapped: Number(getColumnValue(row, ['quantity_scrapped', 'scrapped']) ?? 0) || 0,
+    quantity_reworked: Number(getColumnValue(row, ['quantity_reworked', 'reworked']) ?? 0) || 0,
+  };
+}
+
+function showDataStatus(message, isError = false) {
+  const el = $('#dataImportStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.toggle('error', isError);
+}
+
+function getShiftRows() {
+  return readStoredRows(SHIFT_DATA_STORAGE_KEY, []);
+}
+
+function getQualityRows() {
+  return readStoredRows(QUALITY_DATA_STORAGE_KEY, []);
+}
+
+function persistShiftRows(rows) {
+  writeStoredRows(SHIFT_DATA_STORAGE_KEY, rows);
+}
+
+function persistQualityRows(rows) {
+  writeStoredRows(QUALITY_DATA_STORAGE_KEY, rows);
+}
+
+async function authenticate(username, password) {
+  const demoCredentials = getDemoCredentials(username, password);
+  if (demoCredentials) return { ...demoCredentials, demo: true };
+
+  const formData = new URLSearchParams();
+  formData.append('username', username);
+  formData.append('password', password);
+
+  const res = await fetch(CONFIG.API_BASE + CONFIG.ENDPOINTS.login, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: formData,
+    credentials: 'same-origin',
+  });
+
+  if (!res.ok) {
+    let message = 'Sign-in failed — check the username/password, or use demo data below.';
+    try {
+      const data = await res.json();
+      if (data?.detail) message = data.detail;
+      else if (data?.message) message = data.message;
+    } catch {
+      try {
+        const text = await res.text();
+        if (text) message = text;
+      } catch {}
+    }
+    throw new Error(message);
+  }
+
+  const data = await res.json();
+  return {
+    access_token: data.access_token || data.token || null,
+    role: data.role || '',
+    username: data.username || username,
+    demo: false,
+  };
+}
+
+/* ---------------------------- Clock & shift ---------------------------- */
+function tickClock(){
+  const now = new Date();
+  $('#clock').textContent = now.toLocaleTimeString('en-GB');
+  const h = now.getHours();
+  const shift = (h >= 6 && h < 14) ? 'DAY' : (h >= 14 && h < 22) ? 'EVENING' : 'NIGHT';
+  $('#shiftPill').textContent = shift + ' SHIFT';
+}
+setInterval(tickClock, 1000); tickClock();
+
+/* ---------------------------- Auth ---------------------------- */
+$('#loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = $('#username').value.trim();
+  const password = $('#password').value;
+  setLoginError('');
+
+  try {
+    const data = await authenticate(username, password);
+    AUTH_TOKEN = data.access_token;
+    CURRENT_USER = { username: data.username || username, role: data.role || '' };
+    USING_DEMO = Boolean(data.demo);
+    enterDashboard();
+  } catch (ex) {
+    setLoginError(ex.message || 'Sign-in failed — check the username/password, or use demo data below.');
+  }
+});
+
+$('#demoBtn').addEventListener('click', () => {
+  AUTH_TOKEN = null;
+  CURRENT_USER = { username: 'demo', role: 'manager' };
+  USING_DEMO = true;
+  setLoginError('');
+  enterDashboard();
+});
+
+$('#logoutBtn').addEventListener('click', () => {
+  AUTH_TOKEN = null; CURRENT_USER = null; USING_DEMO = false;
+  $('#dashboard').style.display = 'none';
+  $('#loginScreen').style.display = 'flex';
+  $('#username').value = ''; $('#password').value = '';
+  setLoginError('');
+});
+
+$('#shiftDataForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const rows = getShiftRows();
+  rows.push({
+    shift: $('#shiftEntryShift').value,
+    units_produced: Number($('#shiftEntryProduced').value || 0),
+    units_rejected: Number($('#shiftEntryRejected').value || 0),
+    avg_units_per_record: Number($('#shiftEntryAvg').value || 0),
+  });
+  persistShiftRows(rows);
+  renderShiftTable(rows);
+  $('#shiftDataForm').reset();
+  showDataStatus('Shift performance updated.');
+});
+
+$('#qualityDataForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const rows = getQualityRows();
+  rows.push({
+    defect_type: $('#qualityEntryType').value.trim(),
+    severity: $('#qualityEntrySeverity').value,
+    quantity_scrapped: Number($('#qualityEntryScrapped').value || 0),
+    quantity_reworked: Number($('#qualityEntryReworked').value || 0),
+  });
+  persistQualityRows(rows);
+  renderQualityTable(rows);
+  $('#qualityDataForm').reset();
+  showDataStatus('Quality data updated.');
+});
+
+$('#importDataBtn').addEventListener('click', async () => {
+  const file = $('#dataImportFile').files?.[0];
+  if (!file) {
+    showDataStatus('Choose a CSV or Excel file first.', true);
+    return;
+  }
+
+  try {
+    let rows = [];
+    if (file.name.toLowerCase().endsWith('.csv')) {
+      const text = await file.text();
+      const parsed = parseCsv(text);
+      rows = parsed.slice(1).map((row) => Object.fromEntries(parsed[0].map((header, index) => [header, row[index] || ''])));
+    } else {
+      if (!window.XLSX) throw new Error('Excel support is unavailable in this browser. Please use CSV instead.');
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    }
+
+    const shiftRows = rows.map(sanitizeShiftRow).filter(row => row.shift && (row.units_produced || row.units_rejected || row.avg_units_per_record));
+    const qualityRows = rows.map(sanitizeQualityRow).filter(row => row.defect_type && (row.quantity_scrapped || row.quantity_reworked));
+
+    if (shiftRows.length) {
+      const existingShift = getShiftRows();
+      persistShiftRows([...existingShift, ...shiftRows]);
+      renderShiftTable(getShiftRows());
+    }
+    if (qualityRows.length) {
+      const existingQuality = getQualityRows();
+      persistQualityRows([...existingQuality, ...qualityRows]);
+      renderQualityTable(getQualityRows());
+    }
+
+    if (!shiftRows.length && !qualityRows.length) {
+      throw new Error('No supported shift or quality columns were found in the uploaded file.');
+    }
+
+    showDataStatus(`Imported ${shiftRows.length} shift record(s) and ${qualityRows.length} quality record(s).`);
+  } catch (ex) {
+    showDataStatus(ex.message || 'Unable to import the selected file.', true);
+  }
+});
+
+$('#rangeSelect').addEventListener('change', loadAllData);
+$('#retryBtn').addEventListener('click', loadAllData);
+
+function authHeaders(){
+  return AUTH_TOKEN ? { 'Authorization': 'Bearer ' + AUTH_TOKEN } : {};
+}
+
+async function apiGet(path, params){
+  if(USING_DEMO) throw new Error('demo mode');
+  const url = new URL(CONFIG.API_BASE + path, window.location.origin);
+  if(params) Object.entries(params).forEach(([k,v]) => { if(v !== undefined && v !== null) url.searchParams.set(k,v); });
+  const res = await fetch(url.toString(), { headers: authHeaders() });
+  if(!res.ok) throw new Error('request failed: ' + path);
+  return res.json();
+}
+
+/* ---------------------------- Enter dashboard ---------------------------- */
+function enterDashboard(){
+  $('#loginScreen').style.display = 'none';
+  $('#dashboard').style.display = 'block';
+  $('#userLabel').textContent = (CURRENT_USER.username || '') + (CURRENT_USER.role ? ' · ' + CURRENT_USER.role : '');
+  $('#apiBaseLabel').textContent = CONFIG.API_BASE || window.location.origin;
+  loadAllData();
+}
+
+async function loadAllData(){
+  const days = parseInt($('#rangeSelect').value, 10);
+  const end = new Date();
+  const start = new Date(Date.now() - days * 86400000);
+  const range = { start: start.toISOString(), end: end.toISOString() };
+
+  let kpi, oeeList, pareto, trend, shiftPerf, qualitySumm, machines;
+  let liveOk = true;
+
+  const storedShiftData = getShiftRows();
+  const storedQualityData = getQualityRows();
+
+  if(!USING_DEMO){
+    try{
+      [kpi, oeeList, pareto, trend, shiftPerf, qualitySumm, machines] = await Promise.all([
+        apiGet(CONFIG.ENDPOINTS.kpiSummary, range),
+        apiGet(CONFIG.ENDPOINTS.oeeAll, range),
+        apiGet(CONFIG.ENDPOINTS.downtimePareto, range),
+        apiGet(CONFIG.ENDPOINTS.productionTrend, {...range, granularity:'day'}),
+        apiGet(CONFIG.ENDPOINTS.shiftPerformance, range),
+        apiGet(CONFIG.ENDPOINTS.qualitySummary, range),
+        apiGet(CONFIG.ENDPOINTS.machines),
+      ]);
+    }catch(ex){
+      liveOk = false;
+    }
+  } else {
+    liveOk = false;
+  }
+
+  if(!liveOk){
+    const demo = buildDemoData(days);
+    kpi = demo.kpi; oeeList = demo.oeeList; pareto = demo.pareto; trend = demo.trend;
+    shiftPerf = storedShiftData.length ? storedShiftData : demo.shiftPerf;
+    qualitySumm = storedQualityData.length ? storedQualityData : demo.qualitySumm;
+    machines = demo.machines;
+    showDemoBanner(true);
+  } else {
+    showDemoBanner(false);
+    shiftPerf = storedShiftData.length ? storedShiftData : shiftPerf;
+    qualitySumm = storedQualityData.length ? storedQualityData : qualitySumm;
+  }
+
+  renderKPI(kpi);
+  renderGauges(oeeList, machines);
+  renderPareto(pareto);
+  renderTrend(trend);
+  renderShiftTable(shiftPerf);
+  renderQualityTable(qualitySumm);
+}
+
+function showDemoBanner(show){
+  $('#demoBanner').style.display = show ? 'flex' : 'none';
+  $('#connLed').classList.toggle('demo', show);
+  $('#connLed').classList.toggle('offline', false);
+}
+
+/* ---------------------------- Renderers ---------------------------- */
+function renderKPI(k){
+  const cells = [
+    { label:'Overall OEE', value:k.overall_oee, suffix:'%', cls:'amber' },
+    { label:'Availability', value:k.overall_availability, suffix:'%' },
+    { label:'Performance', value:k.overall_performance, suffix:'%' },
+    { label:'Quality', value:k.overall_quality, suffix:'%' },
+    { label:'Units produced', value:k.total_units_produced, suffix:'' },
+    { label:'Units rejected', value:k.total_units_rejected, suffix:'', cls:(k.total_units_rejected>0?'red':'') },
+    { label:'Downtime (min)', value:Math.round(k.total_downtime_minutes), suffix:'' },
+    { label:'Machines down', value:k.machines_down, suffix:` / ${k.active_machines}`, cls:(k.machines_down>0?'red':'green') },
+  ];
+  $('#kpiStrip').innerHTML = cells.map(c => `
+    <div class="kpi-cell">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value ${c.cls||''}">${fmtNum(c.value)}<small>${c.suffix}</small></div>
+    </div>`).join('');
+}
+
+function fmtNum(n){
+  if(n === undefined || n === null) return '—';
+  return typeof n === 'number' ? (Number.isInteger(n) ? n.toLocaleString() : n.toFixed(1)) : n;
+}
+
+const RING_COLORS = { availability: '#4f8fe0', performance: '#f2a63a', quality: '#4fa876' };
+
+function gaugeSVG(av, pf, ql, oee){
+  const size = 132, cx = size/2, cy = size/2;
+  const rings = [
+    { r: 54, pct: av, color: RING_COLORS.availability },
+    { r: 42, pct: pf, color: RING_COLORS.performance },
+    { r: 30, pct: ql, color: RING_COLORS.quality },
+  ];
+  const arcs = rings.map(ring => {
+    const c = 2 * Math.PI * ring.r;
+    const dash = (Math.max(0, Math.min(100, ring.pct)) / 100) * c;
+    return `
+      <circle cx="${cx}" cy="${cy}" r="${ring.r}" fill="none" stroke="#2a2f34" stroke-width="6"/>
+      <circle cx="${cx}" cy="${cy}" r="${ring.r}" fill="none" stroke="${ring.color}" stroke-width="6"
+        stroke-dasharray="${dash} ${c-dash}" stroke-linecap="round"
+        transform="rotate(-90 ${cx} ${cy})" />`;
+  }).join('');
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      ${arcs}
+      <text x="${cx}" y="${cy-2}" text-anchor="middle" fill="#e9e6de" font-family="IBM Plex Mono, monospace" font-size="20" font-weight="600">${oee.toFixed(0)}</text>
+      <text x="${cx}" y="${cy+14}" text-anchor="middle" fill="#8b9198" font-family="IBM Plex Mono, monospace" font-size="9" letter-spacing="1">OEE %</text>
+    </svg>`;
+}
+
+function renderGauges(oeeList, machines){
+  const statusByName = {};
+  (machines||[]).forEach(m => { statusByName[m.name] = m.status; });
+
+  $('#gaugeGrid').innerHTML = (oeeList||[]).map(o => {
+    const status = (statusByName[o.machine_name] || o.status || 'running').toLowerCase();
+    return `
+    <div class="gauge-card">
+      <div class="gauge-name">${o.machine_name}</div>
+      <span class="gauge-status ${status}">${status}</span>
+      ${gaugeSVG(o.availability, o.performance, o.quality, o.oee)}
+      <div class="gauge-legend">
+        <span><span class="dot" style="background:${RING_COLORS.availability}"></span>Avail ${o.availability.toFixed(0)}%</span>
+        <span><span class="dot" style="background:${RING_COLORS.performance}"></span>Perf ${o.performance.toFixed(0)}%</span>
+        <span><span class="dot" style="background:${RING_COLORS.quality}"></span>Qual ${o.quality.toFixed(0)}%</span>
+      </div>
+    </div>`;
+  }).join('') || '<div class="chart-empty" style="grid-column:1/-1;">No machine OEE data for this range.</div>';
+}
+
+function renderPareto(rows){
+  const el = $('#paretoChart');
+  if(!rows || rows.length === 0){ el.innerHTML = '<div class="chart-empty">No downtime recorded for this range.</div>'; return; }
+  const max = Math.max(...rows.map(r => r.total_minutes));
+  el.innerHTML = rows.map(r => {
+    const pct = max > 0 ? (r.total_minutes / max) * 100 : 0;
+    const label = String(r.category).replace(/_/g,' ');
+    return `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:11px; margin-bottom:5px;">
+          <span style="text-transform:capitalize;">${label}</span>
+          <span style="color:var(--text-muted);">${fmtNum(r.total_minutes)} min · ${r.event_count} events</span>
+        </div>
+        <div style="background:#262b30; border-radius:2px; height:10px; overflow:hidden;">
+          <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, var(--amber), #c9840f);"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderTrend(rows){
+  const el = $('#trendChart');
+  if(!rows || rows.length === 0){ el.innerHTML = '<div class="chart-empty">No production records for this range.</div>'; return; }
+  const sorted = [...rows].sort((a,b) => a.period < b.period ? -1 : 1);
+  const w = 520, h = 200, pad = 28;
+  const maxVal = Math.max(...sorted.map(r => Math.max(r.units_produced, r.target_units)), 1);
+  const stepX = (w - pad*2) / Math.max(sorted.length - 1, 1);
+  const toY = (v) => h - pad - (v / maxVal) * (h - pad*2);
+
+  const pathFor = (key) => sorted.map((r,i) => `${i===0?'M':'L'} ${pad + i*stepX} ${toY(r[key])}`).join(' ');
+
+  const gridLines = [0,.25,.5,.75,1].map(t => {
+    const y = h - pad - t*(h-pad*2);
+    return `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="#262b30" stroke-width="1"/>`;
+  }).join('');
+
+  el.innerHTML = `
+    <svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+      ${gridLines}
+      <path d="${pathFor('target_units')}" fill="none" stroke="#4f8fe0" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7"/>
+      <path d="${pathFor('units_produced')}" fill="none" stroke="#f2a63a" stroke-width="2.2"/>
+    </svg>
+    <div class="gauge-legend" style="justify-content:flex-start; margin-top:6px;">
+      <span><span class="dot" style="background:#f2a63a"></span>Produced</span>
+      <span><span class="dot" style="background:#4f8fe0"></span>Target</span>
+    </div>`;
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let currentRow = [];
+  let currentValue = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (char === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        currentValue += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      currentRow.push(currentValue);
+      currentValue = '';
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && text[i + 1] === '\n') i += 1;
+      currentRow.push(currentValue);
+      if (currentRow.some(cell => String(cell).trim() !== '')) rows.push(currentRow);
+      currentRow = [];
+      currentValue = '';
+    } else {
+      currentValue += char;
+    }
+  }
+
+  if (currentValue.length || currentRow.length) {
+    currentRow.push(currentValue);
+    if (currentRow.some(cell => String(cell).trim() !== '')) rows.push(currentRow);
+  }
+
+  return rows;
+}
+
+function renderShiftTable(rows){
+  $('#shiftTableBody').innerHTML = (rows||[]).map(r => `
+    <tr>
+      <td style="text-transform:capitalize;">${(r.shift || '').toLowerCase()}</td>
+      <td>${fmtNum(r.units_produced)}</td>
+      <td>${fmtNum(r.units_rejected)}</td>
+      <td>${fmtNum(r.avg_units_per_record)}</td>
+    </tr>`).join('') || `<tr><td colspan="4" class="chart-empty">No shift data.</td></tr>`;
+}
+
+function renderQualityTable(rows){
+  $('#qualityTableBody').innerHTML = (rows||[]).map(r => `
+    <tr>
+      <td style="white-space:normal;">${r.defect_type}</td>
+      <td><span class="sev ${r.severity}">${r.severity}</span></td>
+      <td>${fmtNum(r.quantity_scrapped)}</td>
+      <td>${fmtNum(r.quantity_reworked)}</td>
+    </tr>`).join('') || `<tr><td colspan="4" class="chart-empty">No quality events.</td></tr>`;
+}
+
+/* ---------------------------- Demo data fallback ----------------------------
+   Used when the API can't be reached, so this page is still useful standalone
+   and previewable. Shapes mirror schemas.py / analytics.py exactly. */
+function buildDemoData(days){
+  const machineNames = [
+    ['CNC Mill 1','running'], ['CNC Lathe 2','running'], ['Robotic Welding Cell 3','down'],
+    ['Robotic Welding Cell 4','running'], ['Stamping Press 5','maintenance'], ['Injection Molding 6','running'],
+    ['Conveyor System 7','idle'], ['Vision Inspection 8','running'],
+  ];
+  const oeeList = machineNames.map(([name, status], i) => {
+    const av = 78 + Math.sin(i)*10, pf = 82 + Math.cos(i*1.3)*9, ql = 94 + Math.sin(i*2)*4;
+    return {
+      machine_id: i+1, machine_name: name, status,
+      availability: clamp(av), performance: clamp(pf), quality: clamp(ql),
+      oee: clamp(av/100 * pf/100 * ql/100 * 100),
+    };
+  });
+  const machines = machineNames.map(([name,status],i) => ({ id:i+1, name, status }));
+
+  const overallAv = avg(oeeList.map(o=>o.availability));
+  const overallPf = avg(oeeList.map(o=>o.performance));
+  const overallQl = avg(oeeList.map(o=>o.quality));
+  const kpi = {
+    total_units_produced: 148200, total_units_rejected: 5230,
+    overall_oee: (overallAv/100*overallPf/100*overallQl/100*100),
+    overall_availability: overallAv, overall_performance: overallPf, overall_quality: overallQl,
+    total_downtime_minutes: 3120, active_machines: machineNames.length,
+    machines_down: oeeList.filter(o=>o.status==='down').length, open_maintenance_alerts: 4,
+  };
+
+  const pareto = [
+    { category:'unplanned_mechanical', total_minutes:980, event_count:22 },
+    { category:'material_shortage', total_minutes:640, event_count:14 },
+    { category:'changeover', total_minutes:520, event_count:31 },
+    { category:'unplanned_electrical', total_minutes:410, event_count:9 },
+    { category:'quality_hold', total_minutes:290, event_count:11 },
+    { category:'operator_break', total_minutes:180, event_count:26 },
+    { category:'planned_maintenance', total_minutes:100, event_count:5 },
+  ];
+
+  const trend = Array.from({length: Math.min(days,30)}, (_,i) => {
+    const d = new Date(Date.now() - (Math.min(days,30)-1-i)*86400000);
+    const target = 6200 + Math.round(Math.sin(i/3)*300);
+    return {
+      period: d.toISOString().slice(0,10),
+      units_produced: target - Math.round(Math.random()*400),
+      units_rejected: Math.round(80 + Math.random()*60),
+      target_units: target,
+    };
+  });
+
+  const shiftPerf = [
+    { shift:'day', units_produced:58200, units_rejected:1900, avg_units_per_record:648 },
+    { shift:'evening', units_produced:51400, units_rejected:1780, avg_units_per_record:611 },
+    { shift:'night', units_produced:38600, units_rejected:1550, avg_units_per_record:552 },
+  ];
+
+  const qualitySumm = [
+    { defect_type:'Dimensional out-of-tolerance', severity:'major', quantity_scrapped:820, quantity_reworked:140 },
+    { defect_type:'Weld porosity', severity:'critical', quantity_scrapped:410, quantity_reworked:60 },
+    { defect_type:'Surface finish defect', severity:'minor', quantity_scrapped:260, quantity_reworked:310 },
+    { defect_type:'Warping', severity:'major', quantity_scrapped:190, quantity_reworked:90 },
+    { defect_type:'Contamination', severity:'critical', quantity_scrapped:120, quantity_reworked:20 },
+  ];
+
+  return { kpi, oeeList, pareto, trend, shiftPerf, qualitySumm, machines };
+}
+function clamp(v){ return Math.max(0, Math.min(100, v)); }
+function avg(arr){ return arr.reduce((a,b)=>a+b,0) / (arr.length || 1); }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.1/dist/xlsx.full.min.js"></script>
+</body>
+</html>
