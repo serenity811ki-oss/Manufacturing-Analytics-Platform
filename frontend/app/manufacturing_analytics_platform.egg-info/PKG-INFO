@@ -1,0 +1,18 @@
+Metadata-Version: 2.4
+Name: manufacturing-analytics-platform
+Version: 0.1.0
+Summary: Manufacturing Analytics FastAPI backend for production, maintenance, quality, and reporting.
+Project-URL: Homepage, https://example.com
+Project-URL: Source, https://example.com/repo
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi==0.139.2
+Requires-Dist: uvicorn==0.51.0
+Requires-Dist: SQLAlchemy==2.0.51
+Requires-Dist: pydantic==2.13.4
+Requires-Dist: email-validator==2.3.0
+Requires-Dist: passlib[bcrypt]==1.7.4
+Requires-Dist: python-jose[cryptography]==3.5.0
+Requires-Dist: python-multipart==0.0.32
+Requires-Dist: openpyxl==3.1.5
+Requires-Dist: reportlab==5.0.0
