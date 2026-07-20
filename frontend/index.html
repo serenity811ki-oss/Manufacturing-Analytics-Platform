@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floor Ops — Manufacturing Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171a;
+    --panel:#1b1f23;
+    --panel-raised:#20252a;
+    --line:#31373d;
+    --line-soft:#262b30;
+    --text:#e9e6de;
+    --text-muted:#8b9198;
+    --amber:#f2a63a;
+    --amber-dim:#7a5a26;
+    --red:#e0483c;
+    --green:#4fa876;
+    --blue:#4f8fe0;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 800px at 15% -10%, #1c2126 0%, var(--bg) 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  ::selection{ background:var(--amber); color:#1a1300; }
+
+  /* ---------- Login screen ---------- */
+  #loginScreen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .login-card{
+    width:100%;
+    max-width:380px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:36px 32px 30px;
+    position:relative;
+    overflow:hidden;
+  }
+  .login-card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:repeating-linear-gradient(90deg,var(--amber) 0 14px, transparent 14px 20px);
+    opacity:.8;
+  }
+  .login-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .login-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:26px;
+    margin:0 0 4px;
+    letter-spacing:-.01em;
+  }
+  .login-sub{
+    color:var(--text-muted);
+    font-size:13px;
+    margin:0 0 26px;
+    line-height:1.5;
+  }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    background:#121517;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    padding:11px 12px;
+    border-radius:var(--radius);
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus{ border-color:var(--amber); }
+  .btn{
+    width:100%;
+    background:var(--amber);
+    color:#1a1300;
+    border:none;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:.02em;
+    padding:12px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:filter .15s, transform .05s;
+    margin-top:6px;
+  }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn:active{ transform:translateY(1px); }
+  .btn:focus-visible, a:focus-visible, input:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  .login-error{
+    color:var(--red);
+    font-size:12.5px;
+    font-family:'IBM Plex Mono',monospace;
+    margin-top:12px;
+    min-height:16px;
+  }
+  .login-demo{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid var(--line-soft);
+    font-size:11.5px;
+    color:var(--text-muted);
+    font-family:'IBM Plex Mono',monospace;
+    line-height:1.7;
+  }
+  .login-demo b{ color:var(--text); }
+  .login-demo button{
+    background:none;border:none;color:var(--blue);cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-decoration:underline;
+    padding:0;
+  }
+
+  /* ---------- Dashboard shell ---------- */
+  #dashboard{ display:none; }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 24px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+    position:sticky; top:0; z-index:10;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .topbar-left{ display:flex; align-items:center; gap:12px; }
+  .led{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+    flex-shrink:0;
+  }
+  .led.offline{ background:var(--red); box-shadow:0 0 8px var(--red); }
+  .led.demo{ background:var(--amber); box-shadow:0 0 8px var(--amber); }
+  .brand{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:-.01em;
+  }
+  .brand span{ color:var(--amber); }
+  .topbar-mid{
+    display:flex; align-items:center; gap:22px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--text-muted);
+  }
+  .topbar-mid .clock{ color:var(--text); font-size:13px; letter-spacing:.03em; }
+  .shift-pill{
+    border:1px solid var(--line);
+    padding:4px 10px;
+    border-radius:20px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    font-size:10.5px;
+  }
+  .topbar-right{ display:flex; align-items:center; gap:14px; }
+  .topbar-right select{
+    background:#121517; color:var(--text); border:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 8px; border-radius:var(--radius);
+  }
+  .logout-btn{
+    background:none; border:1px solid var(--line); color:var(--text-muted);
+    font-family:'IBM Plex Mono',monospace; font-size:11px; padding:7px 12px;
+    border-radius:var(--radius); cursor:pointer; text-transform:uppercase; letter-spacing:.05em;
+  }
+  .logout-btn:hover{ border-color:var(--red); color:var(--red); }
+
+  .demo-banner{
+    background:#2a2410; color:var(--amber); border-bottom:1px solid var(--amber-dim);
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    padding:8px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .demo-banner button{
+    background:none;border:1px solid var(--amber-dim); color:var(--amber);
+    padding:4px 10px; border-radius:var(--radius); cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11px;
+  }
+
+  main{ padding:22px 24px 60px; max-width:1400px; margin:0 auto; }
+
+  .section-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin:30px 0 12px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-label::after{ content:""; flex:1; height:1px; background:var(--line-soft); }
+  .section-label:first-child{ margin-top:0; }
+
+  /* ---------- KPI strip ---------- */
+  .kpi-strip{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .kpi-cell{
+    background:var(--panel);
+    padding:16px 18px;
+    min-width:0;
+  }
+  .kpi-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:8px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .kpi-value{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:28px;
+    line-height:1;
+  }
+  .kpi-value small{ font-size:14px; color:var(--text-muted); font-weight:500; margin-left:2px; }
+  .kpi-value.amber{ color:var(--amber); }
+  .kpi-value.red{ color:var(--red); }
+  .kpi-value.green{ color:var(--green); }
+
+  /* ---------- Machine gauge grid ---------- */
+  .gauge-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(210px,1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .gauge-card{
+    background:var(--panel);
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .gauge-name{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    text-align:center;
+    line-height:1.3;
+  }
+  .gauge-status{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding:2px 8px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    color:var(--text-muted);
+  }
+  .gauge-status.running{ color:var(--green); border-color:#2c5a41; }
+  .gauge-status.down{ color:var(--red); border-color:#5a2c27; }
+  .gauge-status.idle,.gauge-status.offline{ color:var(--text-muted); }
+  .gauge-status.maintenance{ color:var(--amber); border-color:var(--amber-dim); }
+  .gauge-legend{
+    display:flex; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--text-muted);
+    flex-wrap:wrap; justify-content:center;
+  }
+  .gauge-legend span{ display:flex; align-items:center; gap:4px; }
+  .dot{ width:6px;height:6px;border-radius:50%; display:inline-block; }
+
+  /* ---------- Charts row ---------- */
+  .charts-row{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .chart-card{ background:var(--panel); padding:18px 20px 12px; min-width:0; }
+  .chart-title{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px; margin-bottom:2px;
+  }
+  .chart-sub{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text-muted); margin-bottom:14px; }
+  .chart-empty{ color:var(--text-muted); font-family:'IBM Plex Mono',monospace; font-size:12px; padding:30px 0; text-align:center; }
+
+  /* ---------- Tables row ---------- */
+  .tables-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .table-card{ background:var(--panel); padding:18px 20px 8px; min-width:0; overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  thead th{
+    text-align:left;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    border-bottom:1px solid var(--line);
+    padding:0 10px 9px 0;
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:9px 10px 9px 0;
+    border-bottom:1px solid var(--line-soft);
+    font-family:'IBM Plex Mono',monospace;
+    white-space:nowrap;
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  .sev{
+    display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px;
+    text-transform:uppercase; letter-spacing:.05em;
+    border:1px solid var(--line);
+  }
+  .sev.minor{ color:var(--text-muted); }
+  .sev.major{ color:var(--amber); border-color:var(--amber-dim); }
+  .sev.critical{ color:var(--red); border-color:#5a2c27; }
+
+  .upload-card{
+    background:linear-gradient(135deg, rgba(242,166,58,.08), rgba(79,143,224,.08));
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+  }
+  .upload-row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .upload-row input[type="file"]{
+    color:var(--text-muted);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+  }
+  .upload-row button{ width:auto; padding:10px 14px; }
+  .upload-status{ min-height:18px; color:var(--text-muted); font-family:'IBM Plex Mono',monospace; font-size:12px; }
+  .upload-status.success{ color:var(--green); }
+  .upload-status.error{ color:var(--red); }
+
+  .inline-form{ display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-top:10px; }
+  .inline-form input, .inline-form select{
+    width:100%; background:#121517; border:1px solid var(--line); color:var(--text);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:8px 10px; border-radius:var(--radius);
+  }
+  .inline-form button{ width:auto; padding:10px 12px; }
+
+  footer{
+    text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    color:var(--text-muted);
+    padding:30px 24px 40px;
+  }
+
+  @media (max-width: 900px){
+    .kpi-strip{ grid-template-columns:repeat(2,1fr); }
+    .charts-row, .tables-row{ grid-template-columns:1fr; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========================= LOGIN SCREEN ========================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-eyebrow">Floor Ops · Access Control</div>
+    <h1 class="login-title">Sign in to the line</h1>
+    <p class="login-sub">Authenticate to view live OEE, downtime, and quality data across the plant.</p>
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" required autocomplete="username" placeholder="e.g. manager">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" required autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button class="btn" type="submit">Sign in</button>
+      <div class="login-error" id="loginError"></div>
+    </form>
+    <div class="login-demo">
+      Backend not running or credentials not seeded yet?
+      <button id="demoBtn" type="button">Continue with demo data →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= DASHBOARD ========================= -->
+<div id="dashboard">
+
+  <div class="demo-banner" id="demoBanner" style="display:none;">
+    <span>⚠ Showing demo data — the API at <code id="apiBaseLabel"></code> couldn't be reached (or endpoints differ from the ones this page assumes). See the ENDPOINTS config at the top of the script.</span>
+    <button id="retryBtn">Retry connection</button>
+  </div>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="led" id="connLed"></span>
+      <span class="brand">FLOOR<span>OPS</span></span>
+    </div>
+    <div class="topbar-mid">
+      <span class="clock" id="clock">--:--:--</span>
+      <span class="shift-pill" id="shiftPill">— SHIFT</span>
+    </div>
+    <div class="topbar-right">
+      <select id="rangeSelect">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-muted);" id="userLabel"></span>
+      <button class="logout-btn" id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="section-label">Plant KPIs</div>
+    <div class="kpi-strip" id="kpiStrip"></div>
+
+    <div class="section-label">Machine OEE — Availability · Performance · Quality</div>
+    <div class="gauge-grid" id="gaugeGrid"></div>
+
+    <div class="section-label">Downtime &amp; Production Trend</div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Downtime pareto</div>
+        <div class="chart-sub">Minutes lost by category, selected range</div>
+        <div id="paretoChart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Production trend</div>
+        <div class="chart-sub">Units produced vs. target, daily</div>
+        <div id="trendChart"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Shift Performance &amp; Quality</div>
+    <div class="tables-row">
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Shift</th><th>Units produced</th><th>Rejected</th><th>Avg / record</th></tr></thead>
+          <tbody id="shiftTableBody"></tbody>
+        </table>
+        <form id="shiftForm" class="inline-form">
+          <select id="shiftName">
+            <option value="day">Day</option>
+            <option value="evening">Evening</option>
+            <option value="night">Night</option>
+          </select>
+          <input id="shiftUnits" type="number" min="0" placeholder="Units produced" required>
+          <input id="shiftRejected" type="number" min="0" placeholder="Rejected" required>
+          <input id="shiftAvg" type="number" min="0" placeholder="Avg / record" required>
+          <button class="btn" type="submit">Add shift</button>
+        </form>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Defect type</th><th>Severity</th><th>Scrapped</th><th>Reworked</th></tr></thead>
+          <tbody id="qualityTableBody"></tbody>
+        </table>
+        <form id="qualityForm" class="inline-form">
+          <input id="qualityType" type="text" placeholder="Defect type" required>
+          <select id="qualitySeverity">
+            <option value="minor">Minor</option>
+            <option value="major">Major</option>
+            <option value="critical">Critical</option>
+          </select>
+          <input id="qualityScrapped" type="number" min="0" placeholder="Scrapped" required>
+          <input id="qualityReworked" type="number" min="0" placeholder="Reworked" required>
+          <button class="btn" type="submit">Add defect</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="section-label">Data Upload</div>
+    <div class="upload-card">
+      <div class="chart-title">Data input place</div>
+      <div class="chart-sub">Upload CSV or JSON files here to feed the dashboard with your machine, downtime, and quality data.</div>
+      <form id="uploadForm" class="upload-row">
+        <input id="uploadFile" type="file" accept=".csv,.json,.txt" required>
+        <button class="btn" type="submit" style="width:auto; padding:10px 14px;">Upload file</button>
+      </form>
+      <div id="uploadStatus" class="upload-status">Choose a file and upload it to the server.</div>
+    </div>
+  </main>
+
+  <footer>FLOOROPS — Manufacturing Analytics · SEMI E10 / ISO 22400 aligned</footer>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG — adjust API_BASE and ENDPOINTS to match your actual FastAPI
+   routers (the router files themselves weren't included in the project
+   files this page was built from, so paths below are best-guess
+   conventions based on main.py / analytics.py / schemas.py). If a call
+   fails, the dashboard falls back to demo data and shows a banner.
+   ===================================================================== */
+const CONFIG = {
+  API_BASE: "http://127.0.0.1:8000",   // local backend default; change if your backend runs elsewhere
+  ENDPOINTS: {
+    login:            "/api/auth/login",              // POST {username,password} -> Token
+    kpiSummary:       "/api/dashboard/kpi-summary",    // GET -> KPISummary
+    oeeAll:           "/api/dashboard/oee",            // GET ?start=&end= -> [OEEResult...]
+    downtimePareto:   "/api/dashboard/downtime-pareto",// GET ?start=&end=
+    productionTrend:  "/api/dashboard/production-trend",// GET ?granularity=day&start=&end=
+    shiftPerformance: "/api/dashboard/shift-performance",// GET ?start=&end=
+    qualitySummary:   "/api/dashboard/scrap-quality", // GET ?start=&end=
+    machines:         "/api/machines",                 // GET -> [MachineOut...] (for status)
+  }
+};
+
+let AUTH_TOKEN = null;
+let CURRENT_USER = null;
+let USING_DEMO = false;
+let UPLOADED_DATA = null;
+let SHIFT_ROWS = [];
+let QUALITY_ROWS = [];
+
+const $ = (sel) => document.querySelector(sel);
+
+/* ---------------------------- Clock & shift ---------------------------- */
+function tickClock(){
+  const now = new Date();
+  $('#clock').textContent = now.toLocaleTimeString('en-GB');
+  const h = now.getHours();
+  const shift = (h >= 6 && h < 14) ? 'DAY' : (h >= 14 && h < 22) ? 'EVENING' : 'NIGHT';
+  $('#shiftPill').textContent = shift + ' SHIFT';
+}
+setInterval(tickClock, 1000); tickClock();
+
+/* ---------------------------- Auth ---------------------------- */
+$('#loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = $('#username').value.trim();
+  const password = $('#password').value;
+  const err = $('#loginError');
+  err.textContent = '';
+
+  if (username !== 'admin' || password !== 'Admin123!') {
+    err.textContent = 'Only the admin account is supported.';
+    return;
+  }
+
+  try {
+    const tokenResponse = await apiPost(CONFIG.ENDPOINTS.login, { username, password });
+    AUTH_TOKEN = tokenResponse.access_token;
+    CURRENT_USER = { username: tokenResponse.username, role: tokenResponse.role };
+    USING_DEMO = false;
+    enterDashboard();
+  } catch (loginError) {
+    err.textContent = loginError.message || 'Sign-in failed — check the username/password, or use demo data below.';
+  }
+});
+
+$('#demoBtn').addEventListener('click', () => {
+  $('#loginError').textContent = 'Only the admin account is supported.';
+});
+
+$('#logoutBtn').addEventListener('click', () => {
+  AUTH_TOKEN = null; CURRENT_USER = null; UPLOADED_DATA = null;
+  $('#dashboard').style.display = 'none';
+  $('#loginScreen').style.display = 'flex';
+  $('#username').value = ''; $('#password').value = '';
+});
+
+$('#rangeSelect').addEventListener('change', loadAllData);
+$('#retryBtn').addEventListener('click', loadAllData);
+$('#shiftForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const row = {
+    shift: $('#shiftName').value,
+    units_produced: Number($('#shiftUnits').value || 0),
+    units_rejected: Number($('#shiftRejected').value || 0),
+    avg_units_per_record: Number($('#shiftAvg').value || 0),
+  };
+  SHIFT_ROWS.push(row);
+  renderShiftTable(SHIFT_ROWS);
+  $('#shiftForm').reset();
+});
+$('#qualityForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const row = {
+    defect_type: $('#qualityType').value.trim(),
+    severity: $('#qualitySeverity').value,
+    quantity_scrapped: Number($('#qualityScrapped').value || 0),
+    quantity_reworked: Number($('#qualityReworked').value || 0),
+  };
+  QUALITY_ROWS.push(row);
+  renderQualityTable(QUALITY_ROWS);
+  $('#qualityForm').reset();
+});
+$('#uploadForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fileInput = $('#uploadFile');
+  const statusEl = $('#uploadStatus');
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) {
+    statusEl.textContent = 'Please choose a file first.';
+    statusEl.className = 'upload-status error';
+    return;
+  }
+
+  statusEl.textContent = 'Uploading...';
+  statusEl.className = 'upload-status';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}/api/upload`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
+    });
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+      throw new Error(errorBody?.detail || `Upload failed (${res.status})`);
+    }
+    const result = await res.json();
+    UPLOADED_DATA = result;
+    renderDashboardFromPayload(result);
+    statusEl.textContent = `Uploaded and synchronized: ${result.filename}`;
+    statusEl.className = 'upload-status success';
+    fileInput.value = '';
+  } catch (err) {
+    statusEl.textContent = err.message || 'Upload failed.';
+    statusEl.className = 'upload-status error';
+  }
+});
+
+function authHeaders(){
+  return AUTH_TOKEN ? { 'Authorization': 'Bearer ' + AUTH_TOKEN } : {};
+}
+
+async function apiGet(path, params){
+  if(USING_DEMO) throw new Error('demo mode');
+  const url = new URL(CONFIG.API_BASE + path, window.location.origin);
+  if(params) Object.entries(params).forEach(([k,v]) => { if(v !== undefined && v !== null) url.searchParams.set(k,v); });
+  try {
+    const res = await fetch(url.toString(), { headers: authHeaders() });
+    if(!res.ok) {
+      let message = `request failed: ${path} (${res.status})`;
+      try {
+        const errorBody = await res.json();
+        if (errorBody?.detail) message = `${message} - ${errorBody.detail}`;
+        else if (errorBody?.message) message = `${message} - ${errorBody.message}`;
+      } catch {}
+      throw new Error(message);
+    }
+    return res.json();
+  } catch (err) {
+    throw new Error(`request failed: ${path} (${err.message})`);
+  }
+}
+
+async function apiPost(path, bodyData){
+  if(USING_DEMO) throw new Error('demo mode');
+  const url = new URL(CONFIG.API_BASE + path, window.location.origin);
+  const body = new URLSearchParams();
+  Object.entries(bodyData || {}).forEach(([k,v]) => {
+    if(v !== undefined && v !== null) body.set(k, v);
+  });
+  try {
+    const res = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        ...authHeaders(),
+      },
+      body: body.toString(),
+    });
+    if(!res.ok){
+      let message = `request failed: ${path} (${res.status})`;
+      try {
+        const errorBody = await res.json();
+        if (errorBody?.detail) message = `${message} - ${errorBody.detail}`;
+        else if (errorBody?.message) message = `${message} - ${errorBody.message}`;
+      } catch {}
+      throw new Error(message);
+    }
+    return res.json();
+  } catch (err) {
+    throw new Error(`request failed: ${path} (${err.message})`);
+  }
+}
+
+/* ---------------------------- Enter dashboard ---------------------------- */
+function enterDashboard(){
+  $('#loginScreen').style.display = 'none';
+  $('#dashboard').style.display = 'block';
+  $('#userLabel').textContent = (CURRENT_USER.username || '') + (CURRENT_USER.role ? ' · ' + CURRENT_USER.role : '');
+  $('#apiBaseLabel').textContent = CONFIG.API_BASE || window.location.origin;
+  loadAllData();
+}
+
+async function loadAllData(){
+  const days = parseInt($('#rangeSelect').value, 10);
+  const end = new Date();
+  const start = new Date(Date.now() - days * 86400000);
+  const range = { start_date: start.toISOString(), end_date: end.toISOString() };
+
+  if (UPLOADED_DATA) {
+    renderDashboardFromPayload(UPLOADED_DATA);
+    showDemoBanner(false);
+    return;
+  }
+
+  let kpi, oeeList, pareto, trend, shiftPerf, qualitySumm, machines;
+  let liveOk = true;
+
+  if(!USING_DEMO){
+    try{
+      [kpi, oeeList, pareto, trend, shiftPerf, qualitySumm, machines] = await Promise.all([
+        apiGet(CONFIG.ENDPOINTS.kpiSummary, range),
+        apiGet(CONFIG.ENDPOINTS.oeeAll, range),
+        apiGet(CONFIG.ENDPOINTS.downtimePareto, range),
+        apiGet(CONFIG.ENDPOINTS.productionTrend, {...range, granularity:'day'}),
+        apiGet(CONFIG.ENDPOINTS.shiftPerformance, range),
+        apiGet(CONFIG.ENDPOINTS.qualitySummary, range),
+        apiGet(CONFIG.ENDPOINTS.machines),
+      ]);
+    }catch(ex){
+      liveOk = false;
+    }
+  } else {
+    liveOk = false;
+  }
+
+  if(!liveOk){
+    const demo = buildDemoData(days);
+    kpi = demo.kpi; oeeList = demo.oeeList; pareto = demo.pareto; trend = demo.trend;
+    shiftPerf = demo.shiftPerf; qualitySumm = demo.qualitySumm; machines = demo.machines;
+    showDemoBanner(true);
+  } else {
+    showDemoBanner(false);
+  }
+
+  renderDashboardFromPayload({ kpi, oeeList, pareto, trend, shiftPerf, qualitySumm, machines });
+}
+
+function renderDashboardFromPayload(data){
+  const kpi = data?.kpi || {};
+  const oeeList = data?.oeeList || data?.oee || [];
+  const pareto = data?.pareto || [];
+  const trend = data?.trend || [];
+  const shiftPerf = data?.shiftPerf || data?.shiftPerformance || [];
+  const qualitySumm = data?.qualitySumm || data?.qualitySummary || [];
+  const machines = data?.machines || [];
+
+  SHIFT_ROWS = Array.isArray(shiftPerf) ? shiftPerf.map(r => ({ ...r })) : [];
+  QUALITY_ROWS = Array.isArray(qualitySumm) ? qualitySumm.map(r => ({ ...r })) : [];
+
+  renderKPI(kpi);
+  renderGauges(oeeList, machines);
+  renderPareto(pareto);
+  renderTrend(trend);
+  renderShiftTable(shiftPerf);
+  renderQualityTable(qualitySumm);
+}
+
+function showDemoBanner(show){
+  $('#demoBanner').style.display = show ? 'flex' : 'none';
+  $('#connLed').classList.toggle('demo', show);
+  $('#connLed').classList.toggle('offline', false);
+}
+
+/* ---------------------------- Renderers ---------------------------- */
+function renderKPI(k){
+  const cells = [
+    { label:'Overall OEE', value:k.overall_oee, suffix:'%', cls:'amber' },
+    { label:'Availability', value:k.overall_availability, suffix:'%' },
+    { label:'Performance', value:k.overall_performance, suffix:'%' },
+    { label:'Quality', value:k.overall_quality, suffix:'%' },
+    { label:'Units produced', value:k.total_units_produced, suffix:'' },
+    { label:'Units rejected', value:k.total_units_rejected, suffix:'', cls:(k.total_units_rejected>0?'red':'') },
+    { label:'Downtime (min)', value:Math.round(k.total_downtime_minutes), suffix:'' },
+    { label:'Machines down', value:k.machines_down, suffix:` / ${k.active_machines}`, cls:(k.machines_down>0?'red':'green') },
+  ];
+  $('#kpiStrip').innerHTML = cells.map(c => `
+    <div class="kpi-cell">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value ${c.cls||''}">${fmtNum(c.value)}<small>${c.suffix}</small></div>
+    </div>`).join('');
+}
+
+function fmtNum(n){
+  if(n === undefined || n === null) return '—';
+  return typeof n === 'number' ? (Number.isInteger(n) ? n.toLocaleString() : n.toFixed(1)) : n;
+}
+
+const RING_COLORS = { availability: '#4f8fe0', performance: '#f2a63a', quality: '#4fa876' };
+
+function gaugeSVG(av, pf, ql, oee){
+  const size = 132, cx = size/2, cy = size/2;
+  const rings = [
+    { r: 54, pct: av, color: RING_COLORS.availability },
+    { r: 42, pct: pf, color: RING_COLORS.performance },
+    { r: 30, pct: ql, color: RING_COLORS.quality },
+  ];
+  const arcs = rings.map(ring => {
+    const c = 2 * Math.PI * ring.r;
+    const dash = (Math.max(0, Math.min(100, ring.pct)) / 100) * c;
+    return `
+      <circle cx="${cx}" cy="${cy}" r="${ring.r}" fill="none" stroke="#2a2f34" stroke-width="6"/>
+      <circle cx="${cx}" cy="${cy}" r="${ring.r}" fill="none" stroke="${ring.color}" stroke-width="6"
+        stroke-dasharray="${dash} ${c-dash}" stroke-linecap="round"
+        transform="rotate(-90 ${cx} ${cy})" />`;
+  }).join('');
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      ${arcs}
+      <text x="${cx}" y="${cy-2}" text-anchor="middle" fill="#e9e6de" font-family="IBM Plex Mono, monospace" font-size="20" font-weight="600">${oee.toFixed(0)}</text>
+      <text x="${cx}" y="${cy+14}" text-anchor="middle" fill="#8b9198" font-family="IBM Plex Mono, monospace" font-size="9" letter-spacing="1">OEE %</text>
+    </svg>`;
+}
+
+function renderGauges(oeeList, machines){
+  const statusByName = {};
+  (machines||[]).forEach(m => { statusByName[m.name] = m.status; });
+
+  $('#gaugeGrid').innerHTML = (oeeList||[]).map(o => {
+    const status = (statusByName[o.machine_name] || o.status || 'running').toLowerCase();
+    return `
+    <div class="gauge-card">
+      <div class="gauge-name">${o.machine_name}</div>
+      <span class="gauge-status ${status}">${status}</span>
+      ${gaugeSVG(o.availability, o.performance, o.quality, o.oee)}
+      <div class="gauge-legend">
+        <span><span class="dot" style="background:${RING_COLORS.availability}"></span>Avail ${o.availability.toFixed(0)}%</span>
+        <span><span class="dot" style="background:${RING_COLORS.performance}"></span>Perf ${o.performance.toFixed(0)}%</span>
+        <span><span class="dot" style="background:${RING_COLORS.quality}"></span>Qual ${o.quality.toFixed(0)}%</span>
+      </div>
+    </div>`;
+  }).join('') || '<div class="chart-empty" style="grid-column:1/-1;">No machine OEE data for this range.</div>';
+}
+
+function renderPareto(rows){
+  const el = $('#paretoChart');
+  if(!rows || rows.length === 0){ el.innerHTML = '<div class="chart-empty">No downtime recorded for this range.</div>'; return; }
+  const max = Math.max(...rows.map(r => r.total_minutes));
+  el.innerHTML = rows.map(r => {
+    const pct = max > 0 ? (r.total_minutes / max) * 100 : 0;
+    const label = String(r.category).replace(/_/g,' ');
+    return `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:11px; margin-bottom:5px;">
+          <span style="text-transform:capitalize;">${label}</span>
+          <span style="color:var(--text-muted);">${fmtNum(r.total_minutes)} min · ${r.event_count} events</span>
+        </div>
+        <div style="background:#262b30; border-radius:2px; height:10px; overflow:hidden;">
+          <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, var(--amber), #c9840f);"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderTrend(rows){
+  const el = $('#trendChart');
+  if(!rows || rows.length === 0){ el.innerHTML = '<div class="chart-empty">No production records for this range.</div>'; return; }
+  const sorted = [...rows].sort((a,b) => a.period < b.period ? -1 : 1);
+  const w = 520, h = 200, pad = 28;
+  const maxVal = Math.max(...sorted.map(r => Math.max(r.units_produced, r.target_units)), 1);
+  const stepX = (w - pad*2) / Math.max(sorted.length - 1, 1);
+  const toY = (v) => h - pad - (v / maxVal) * (h - pad*2);
+
+  const pathFor = (key) => sorted.map((r,i) => `${i===0?'M':'L'} ${pad + i*stepX} ${toY(r[key])}`).join(' ');
+
+  const gridLines = [0,.25,.5,.75,1].map(t => {
+    const y = h - pad - t*(h-pad*2);
+    return `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="#262b30" stroke-width="1"/>`;
+  }).join('');
+
+  el.innerHTML = `
+    <svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+      ${gridLines}
+      <path d="${pathFor('target_units')}" fill="none" stroke="#4f8fe0" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7"/>
+      <path d="${pathFor('units_produced')}" fill="none" stroke="#f2a63a" stroke-width="2.2"/>
+    </svg>
+    <div class="gauge-legend" style="justify-content:flex-start; margin-top:6px;">
+      <span><span class="dot" style="background:#f2a63a"></span>Produced</span>
+      <span><span class="dot" style="background:#4f8fe0"></span>Target</span>
+    </div>`;
+}
+
+function renderShiftTable(rows){
+  $('#shiftTableBody').innerHTML = (rows||[]).map(r => `
+    <tr>
+      <td style="text-transform:capitalize;">${r.shift}</td>
+      <td>${fmtNum(r.units_produced)}</td>
+      <td>${fmtNum(r.units_rejected)}</td>
+      <td>${fmtNum(r.avg_units_per_record)}</td>
+    </tr>`).join('') || `<tr><td colspan="4" class="chart-empty">No shift data.</td></tr>`;
+}
+
+function renderQualityTable(rows){
+  $('#qualityTableBody').innerHTML = (rows||[]).map(r => `
+    <tr>
+      <td style="white-space:normal;">${r.defect_type}</td>
+      <td><span class="sev ${r.severity}">${r.severity}</span></td>
+      <td>${fmtNum(r.quantity_scrapped)}</td>
+      <td>${fmtNum(r.quantity_reworked)}</td>
+    </tr>`).join('') || `<tr><td colspan="4" class="chart-empty">No quality events.</td></tr>`;
+}
+
+/* ---------------------------- Demo data fallback ----------------------------
+   Used when the API can't be reached, so this page is still useful standalone
+   and previewable. Shapes mirror schemas.py / analytics.py exactly. */
+function buildDemoData(days){
+  const machineNames = [
+    ['CNC Mill 1','running'], ['CNC Lathe 2','running'], ['Robotic Welding Cell 3','down'],
+    ['Robotic Welding Cell 4','running'], ['Stamping Press 5','maintenance'], ['Injection Molding 6','running'],
+    ['Conveyor System 7','idle'], ['Vision Inspection 8','running'],
+  ];
+  const oeeList = machineNames.map(([name, status], i) => {
+    const av = 78 + Math.sin(i)*10, pf = 82 + Math.cos(i*1.3)*9, ql = 94 + Math.sin(i*2)*4;
+    return {
+      machine_id: i+1, machine_name: name, status,
+      availability: clamp(av), performance: clamp(pf), quality: clamp(ql),
+      oee: clamp(av/100 * pf/100 * ql/100 * 100),
+    };
+  });
+  const machines = machineNames.map(([name,status],i) => ({ id:i+1, name, status }));
+
+  const overallAv = avg(oeeList.map(o=>o.availability));
+  const overallPf = avg(oeeList.map(o=>o.performance));
+  const overallQl = avg(oeeList.map(o=>o.quality));
+  const kpi = {
+    total_units_produced: 148200, total_units_rejected: 5230,
+    overall_oee: (overallAv/100*overallPf/100*overallQl/100*100),
+    overall_availability: overallAv, overall_performance: overallPf, overall_quality: overallQl,
+    total_downtime_minutes: 3120, active_machines: machineNames.length,
+    machines_down: oeeList.filter(o=>o.status==='down').length, open_maintenance_alerts: 4,
+  };
+
+  const pareto = [
+    { category:'unplanned_mechanical', total_minutes:980, event_count:22 },
+    { category:'material_shortage', total_minutes:640, event_count:14 },
+    { category:'changeover', total_minutes:520, event_count:31 },
+    { category:'unplanned_electrical', total_minutes:410, event_count:9 },
+    { category:'quality_hold', total_minutes:290, event_count:11 },
+    { category:'operator_break', total_minutes:180, event_count:26 },
+    { category:'planned_maintenance', total_minutes:100, event_count:5 },
+  ];
+
+  const trend = Array.from({length: Math.min(days,30)}, (_,i) => {
+    const d = new Date(Date.now() - (Math.min(days,30)-1-i)*86400000);
+    const target = 6200 + Math.round(Math.sin(i/3)*300);
+    return {
+      period: d.toISOString().slice(0,10),
+      units_produced: target - Math.round(Math.random()*400),
+      units_rejected: Math.round(80 + Math.random()*60),
+      target_units: target,
+    };
+  });
+
+  const shiftPerf = [
+    { shift:'day', units_produced:58200, units_rejected:1900, avg_units_per_record:648 },
+    { shift:'evening', units_produced:51400, units_rejected:1780, avg_units_per_record:611 },
+    { shift:'night', units_produced:38600, units_rejected:1550, avg_units_per_record:552 },
+  ];
+
+  const qualitySumm = [
+    { defect_type:'Dimensional out-of-tolerance', severity:'major', quantity_scrapped:820, quantity_reworked:140 },
+    { defect_type:'Weld porosity', severity:'critical', quantity_scrapped:410, quantity_reworked:60 },
+    { defect_type:'Surface finish defect', severity:'minor', quantity_scrapped:260, quantity_reworked:310 },
+    { defect_type:'Warping', severity:'major', quantity_scrapped:190, quantity_reworked:90 },
+    { defect_type:'Contamination', severity:'critical', quantity_scrapped:120, quantity_reworked:20 },
+  ];
+
+  return { kpi, oeeList, pareto, trend, shiftPerf, qualitySumm, machines };
+}
+function clamp(v){ return Math.max(0, Math.min(100, v)); }
+function avg(arr){ return arr.reduce((a,b)=>a+b,0) / (arr.length || 1); }
+</script>
+</body>
+</html>
