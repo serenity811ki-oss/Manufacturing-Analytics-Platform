@@ -1,7 +1,9 @@
 # Manufacturing Analytics Platform
 
 Username and Password
-For Admin- admin / Admin123!
+For Admin-      admin / Admin123! 
+For Manager-    manager / Manager123!
+For Technician- technician / Tech123!
 
 An enterprise-grade manufacturing analytics system with a FastAPI + PostgreSQL
 backend and a responsive Chart.js dashboard — production monitoring, OEE,
