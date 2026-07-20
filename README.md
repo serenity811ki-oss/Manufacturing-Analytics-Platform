@@ -1,5 +1,8 @@
 # Manufacturing Analytics Platform
 
+Username and Password
+For Admin- admin / Admin123!
+
 An enterprise-grade manufacturing analytics system with a FastAPI + PostgreSQL
 backend and a responsive Chart.js dashboard — production monitoring, OEE,
 predictive maintenance, downtime root-cause analysis, quality/scrap tracking,
