@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SQL Manufacturing Monitoring &amp; Analytics Platform</title>
+<meta name="description" content="A real-time, SQL-based manufacturing monitoring and analytics platform — OEE, downtime, predictive maintenance, and quality insight from your production data." />
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Bootstrap (layout/grid/nav utilities only — visual identity is custom below) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+<style>
+/* ==========================================================================
+   Design tokens — industrial blue / white / gray, telemetry-panel accent
+   ========================================================================== */
+:root {
+  --navy-950: #0B1622;
+  --navy-900: #101E2E;
+  --navy-800: #16283B;
+  --navy-700: #1E3349;
+  --slate-700: #2C3E50;
+  --slate-600: #3E5164;
+  --slate-500: #607488;
+  --slate-400: #8CA0B3;
+  --slate-300: #B9C7D3;
+  --slate-100: #E7ECF0;
+  --bg-page: #F5F7F9;
+  --surface: #FFFFFF;
+  --border: #DDE4EA;
+  --border-strong: #C4CFD8;
+
+  --teal-600: #0E7C86;
+  --teal-500: #12959F;
+  --teal-100: #E1F4F5;
+  --green-500: #3E9C5A;
+
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 2px rgba(11,22,34,0.06);
+  --shadow-md: 0 8px 24px rgba(11,22,34,0.10);
+  --shadow-lg: 0 20px 48px rgba(11,22,34,0.22);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  background: var(--bg-page);
+  color: var(--slate-700);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--teal-500); outline-offset: 2px; }
+.container-xl { max-width: 1200px; }
+h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.02em; color: var(--slate-700); }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--teal-600); display: inline-flex; align-items: center; gap: 8px;
+}
+.eyebrow::before { content: ""; width: 18px; height: 2px; background: var(--teal-600); display: inline-block; }
+.lead-text { color: var(--slate-500); font-size: 1.05rem; line-height: 1.7; }
+
+/* ==========================================================================
+   Header / Nav
+   ========================================================================== */
+.site-header {
+  background: var(--navy-950);
+  position: sticky; top: 0; z-index: 1000;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.navbar { padding: 14px 0; }
+.brand-lockup { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+.brand-mark {
+  width: 38px; height: 38px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--teal-600), var(--navy-700));
+  color: #fff; font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; letter-spacing: 0.4px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+}
+.brand-text { line-height: 1.15; }
+.brand-name { font-weight: 700; font-size: 15px; color: #fff; }
+.brand-sub { font-family: var(--font-mono); font-size: 10.5px; color: var(--slate-400); letter-spacing: 0.04em; }
+
+.site-header .nav-link {
+  color: var(--slate-300); font-weight: 500; font-size: 14px; padding: 8px 16px !important;
+  border-radius: 6px; transition: color .15s, background .15s;
+}
+.site-header .nav-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.site-header .nav-link.active { color: #fff; }
+.btn-nav-cta {
+  background: var(--teal-600); color: #fff !important; border-radius: 7px; padding: 8px 18px !important;
+  font-weight: 600; font-size: 13.5px; margin-left: 6px;
+}
+.btn-nav-cta:hover { background: var(--teal-500); }
+.navbar-toggler { border-color: rgba(255,255,255,0.2); padding: 5px 9px; }
+.navbar-toggler-icon { filter: invert(1); width: 1.1em; height: 1.1em; }
+
+/* ==========================================================================
+   Hero
+   ========================================================================== */
+.hero {
+  background: radial-gradient(1100px 480px at 78% -10%, rgba(18,149,159,0.22), transparent 60%), var(--navy-950);
+  color: #fff;
+  position: relative;
+  padding: 88px 0 100px;
+  overflow: hidden;
+}
+.hero::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(circle at 30% 30%, black, transparent 72%);
+}
+.hero-content { position: relative; z-index: 1; }
+.hero h1 {
+  color: #fff; font-size: clamp(2.1rem, 4vw, 3.15rem); line-height: 1.08; margin: 18px 0 20px;
+}
+.hero h1 em { color: var(--teal-500); font-style: normal; }
+.hero .lead-text { color: var(--slate-300); font-size: 1.12rem; max-width: 520px; }
+.hero-cta { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+.btn-primary-industrial {
+  background: var(--teal-600); border: 1px solid var(--teal-600); color: #fff;
+  font-weight: 600; padding: 12px 24px; border-radius: 8px; font-size: 14.5px;
+  transition: background .15s, transform .1s;
+}
+.btn-primary-industrial:hover { background: var(--teal-500); color: #fff; transform: translateY(-1px); }
+.btn-outline-industrial {
+  background: transparent; border: 1px solid rgba(255,255,255,0.28); color: #fff;
+  font-weight: 600; padding: 12px 24px; border-radius: 8px; font-size: 14.5px;
+  transition: border-color .15s, background .15s;
+}
+.btn-outline-industrial:hover { border-color: #fff; background: rgba(255,255,255,0.06); color: #fff; }
+
+/* --- Hero instrument panel (signature element) --- */
+.panel-card {
+  background: linear-gradient(180deg, var(--navy-800), var(--navy-900));
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 22px 22px 18px;
+  position: relative;
+}
+.panel-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.panel-card-title { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate-400); }
+.panel-live { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--green-500); }
+.panel-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-500); animation: pulse-dot 1.8s infinite; }
+@keyframes pulse-dot { 0%,100% { box-shadow: 0 0 0 0 rgba(62,156,90,0.5);} 50% { box-shadow: 0 0 0 5px rgba(62,156,90,0);} }
+
+.panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel-tile {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px;
+  padding: 13px 14px;
+}
+.panel-tile-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate-400); font-weight: 600; }
+.panel-tile-value { font-family: var(--font-mono); font-size: 22px; font-weight: 600; color: #fff; margin-top: 4px; }
+.panel-tile-value.up { color: var(--teal-500); }
+.panel-tile-sub { font-size: 11px; color: var(--slate-500); margin-top: 2px; }
+
+.panel-spark { height: 46px; margin-top: 14px; }
+
+/* ==========================================================================
+   Section shell
+   ========================================================================== */
+.section { padding: 88px 0; }
+.section-alt { background: var(--surface); }
+.section-head { max-width: 640px; margin-bottom: 46px; }
+.section-head h2 { font-size: clamp(1.6rem, 2.6vw, 2.15rem); margin: 14px 0 12px; }
+
+/* ==========================================================================
+   Feature cards
+   ========================================================================== */
+.feature-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 26px 24px; height: 100%; position: relative; overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.feature-card::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--teal-600);
+  transform: scaleX(0); transform-origin: left; transition: transform .25s ease;
+}
+.feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+.feature-card:hover::before { transform: scaleX(1); }
+.feature-icon {
+  width: 46px; height: 46px; border-radius: 10px; background: var(--teal-100); color: var(--teal-600);
+  display: flex; align-items: center; justify-content: center; font-size: 21px; margin-bottom: 16px;
+}
+.feature-card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+.feature-card p { color: var(--slate-500); font-size: 14px; line-height: 1.65; margin: 0; }
+
+/* ==========================================================================
+   How it works
+   ========================================================================== */
+.flow-row { display: flex; flex-direction: column; gap: 0; }
+.flow-step { display: flex; gap: 22px; padding: 26px 0; border-bottom: 1px solid var(--border); }
+.flow-step:last-child { border-bottom: none; }
+.flow-num {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--teal-600);
+  background: var(--teal-100); border-radius: 8px; width: 42px; height: 42px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.flow-body h4 { font-size: 1.02rem; margin: 4px 0 6px; }
+.flow-body p { color: var(--slate-500); font-size: 14px; margin: 0; line-height: 1.65; max-width: 560px; }
+
+/* ==========================================================================
+   Dashboard preview mock
+   ========================================================================== */
+.preview-frame {
+  background: var(--navy-950); border-radius: var(--radius-lg); padding: 14px 14px 0;
+  box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid var(--navy-700);
+}
+.preview-chrome { display: flex; align-items: center; gap: 7px; padding: 0 4px 12px; }
+.preview-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--navy-700); }
+.preview-body { background: var(--bg-page); border-radius: 10px 10px 0 0; padding: 20px; min-height: 340px; }
+.preview-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+.preview-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.preview-kpi span { display: block; }
+.preview-kpi .l { font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--slate-500); font-weight: 700; }
+.preview-kpi .v { font-family: var(--font-mono); font-size: 16px; color: var(--slate-700); font-weight: 600; margin-top: 3px; }
+.preview-chart {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px;
+  height: 180px; display: flex; align-items: flex-end; gap: 6px;
+}
+.preview-bar { flex: 1; background: linear-gradient(180deg, var(--teal-500), var(--teal-600)); border-radius: 3px 3px 0 0; opacity: .88; }
+.preview-caption {
+  text-align: center; padding: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--slate-400);
+  letter-spacing: .04em;
+}
+
+/* ==========================================================================
+   CTA band
+   ========================================================================== */
+.cta-band {
+  background: linear-gradient(120deg, var(--navy-900), var(--teal-600) 160%);
+  border-radius: var(--radius-lg); padding: 54px 44px; color: #fff; text-align: center;
+  position: relative; overflow: hidden;
+}
+.cta-band h2 { color: #fff; margin-bottom: 12px; }
+.cta-band p { color: var(--slate-300); max-width: 480px; margin: 0 auto 26px; }
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.site-footer { background: var(--navy-950); color: var(--slate-400); padding: 56px 0 26px; }
+.footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.footer-col-title { color: #fff; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
+.footer-link { display: block; color: var(--slate-400); font-size: 13.5px; margin-bottom: 9px; text-decoration: none; }
+.footer-link:hover { color: #fff; }
+.footer-divider { border-color: rgba(255,255,255,0.08); margin: 40px 0 22px; }
+.footer-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 12.5px; }
+.social-links { display: flex; gap: 10px; }
+.social-links a {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center; color: var(--slate-300); text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.social-links a:hover { background: var(--teal-600); color: #fff; border-color: var(--teal-600); }
+
+@media (max-width: 991px) {
+  .hero { padding: 64px 0 76px; }
+  .hero-visual { margin-top: 40px; }
+  .section { padding: 64px 0; }
+  .preview-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================= HEADER / NAV ============================= -->
+<header class="site-header">
+  <nav class="navbar navbar-expand-lg">
+    <div class="container container-xl">
+      <a class="brand-lockup" href="#home">
+        <span class="brand-mark">SM</span>
+        <span class="brand-text">
+          <span class="brand-name d-block">SQL Manufacturing Platform</span>
+          <span class="brand-sub">MONITORING &amp; ANALYTICS</span>
+        </span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center mt-3 mt-lg-0">
+          <li class="nav-item"><a class="nav-link active" href="#home">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="#analytics">Analytics</a></li>
+          <li class="nav-item"><a class="nav-link" href="#reports">Reports</a></li>
+          <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+          <li class="nav-item"><a class="nav-link btn-nav-cta" href="#cta">Launch App</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<!-- ============================= HERO ============================= -->
+<section class="hero" id="home">
+  <div class="container container-xl">
+    <div class="row align-items-center gy-5">
+      <div class="col-lg-6 hero-content">
+        <span class="eyebrow">Real-time · SQL-driven · Production-ready</span>
+        <h1>See your production floor <em>the moment it happens.</em></h1>
+        <p class="lead-text">
+          A real-time, SQL-based manufacturing monitoring and analytics platform that turns raw
+          machine, production, and quality data into OEE, downtime, and maintenance insight —
+          continuously, not at end of shift.
+        </p>
+        <div class="hero-cta">
+          <a href="#dashboard" class="btn btn-primary-industrial">View Live Dashboard</a>
+          <a href="https://github.com/serenity811ki-oss" target="_blank" rel="noopener" class="btn btn-outline-industrial">
+            <i class="bi bi-github me-1"></i> View on GitHub
+          </a>
+        </div>
+      </div>
+
+      <div class="col-lg-6 hero-visual">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <span class="panel-card-title">Plant Pulse — Line A</span>
+            <span class="panel-live"><span class="panel-live-dot"></span>LIVE</span>
+          </div>
+          <div class="panel-grid">
+            <div class="panel-tile">
+              <div class="panel-tile-label">Overall OEE</div>
+              <div class="panel-tile-value up" id="stat-oee">84.2%</div>
+              <div class="panel-tile-sub">Target 85%</div>
+            </div>
+            <div class="panel-tile">
+              <div class="panel-tile-label">Units Today</div>
+              <div class="panel-tile-value" id="stat-units">18,430</div>
+              <div class="panel-tile-sub">+2.4% vs. yesterday</div>
+            </div>
+            <div class="panel-tile">
+              <div class="panel-tile-label">Machines Active</div>
+              <div class="panel-tile-value" id="stat-machines">11 / 12</div>
+              <div class="panel-tile-sub">1 in scheduled PM</div>
+            </div>
+            <div class="panel-tile">
+              <div class="panel-tile-label">Open Alerts</div>
+              <div class="panel-tile-value" id="stat-alerts">3</div>
+              <div class="panel-tile-sub">Predictive maintenance</div>
+            </div>
+          </div>
+          <svg class="panel-spark" viewBox="0 0 300 46" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points="0,34 25,30 50,32 75,20 100,24 125,14 150,18 175,10 200,16 225,8 250,12 275,6 300,10"
+              fill="none" stroke="#12959F" stroke-width="2" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= FEATURES ============================= -->
+<section class="section section-alt" id="analytics">
+  <div class="container container-xl">
+    <div class="section-head">
+      <span class="eyebrow">Platform capabilities</span>
+      <h2>Everything the plant floor needs, in one SQL-backed system.</h2>
+      <p class="lead-text">Built on a normalized relational schema, so every KPI you see traces back to an auditable query — not a spreadsheet guess.</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-broadcast"></i></div>
+          <h3>Real-Time Monitoring</h3>
+          <p>Live machine status, cycle counts, and shift activity streamed to the dashboard as it happens on the line — no manual refresh required.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-database-check"></i></div>
+          <h3>Database Integration</h3>
+          <p>A normalized SQL schema with indexed foreign keys across machines, production, downtime, and maintenance — built for fast, reliable joins at scale.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-speedometer2"></i></div>
+          <h3>KPI Dashboard</h3>
+          <p>Availability, performance, and quality rolled into OEE, with plant-wide and per-machine views side by side.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
+          <h3>Production Analytics</h3>
+          <p>Trend, throughput, and shift-level analysis across lines and machines, filterable by date range, line, or status.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-tools"></i></div>
+          <h3>Predictive Maintenance</h3>
+          <p>Failure-code tracking, MTBF, and MTTR that flag machines heading toward a breakdown before it costs a shift.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-file-earmark-bar-graph"></i></div>
+          <h3>Report Generation</h3>
+          <p>Export CSV, Excel, or a print-ready PDF summary on demand — for shift handoffs, audits, or leadership reviews.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= HOW IT WORKS ============================= -->
+<section class="section" id="about">
+  <div class="container container-xl">
+    <div class="row gy-5">
+      <div class="col-lg-5">
+        <span class="eyebrow">How it works</span>
+        <h2>From raw machine data to a decision, in four steps.</h2>
+        <p class="lead-text">The pipeline is deliberately simple: connect your data, and the platform handles ingestion, calculation, and presentation.</p>
+      </div>
+      <div class="col-lg-7">
+        <div class="flow-row">
+          <div class="flow-step">
+            <span class="flow-num">01</span>
+            <div class="flow-body">
+              <h4>Connect</h4>
+              <p>Point the platform at your production SQL database, or start from the included normalized schema.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <span class="flow-num">02</span>
+            <div class="flow-body">
+              <h4>Ingest</h4>
+              <p>Production runs, downtime events, maintenance work orders, and quality inspections flow in continuously.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <span class="flow-num">03</span>
+            <div class="flow-body">
+              <h4>Analyze</h4>
+              <p>SQL-driven analytics compute OEE, MTBF/MTTR, and downtime root-cause Pareto as new data arrives.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <span class="flow-num">04</span>
+            <div class="flow-body">
+              <h4>Visualize &amp; Act</h4>
+              <p>Dashboards and reports surface the numbers your team needs, filtered by line, shift, or machine — ready to export or share.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= DASHBOARD PREVIEW ============================= -->
+<section class="section section-alt" id="dashboard">
+  <div class="container container-xl">
+    <div class="section-head mx-auto text-center">
+      <span class="eyebrow">Dashboard preview</span>
+      <h2>One screen, the whole plant.</h2>
+      <p class="lead-text mx-auto">Connect your data source to populate this view with live KPIs, trends, and machine status.</p>
+    </div>
+
+    <div class="preview-frame mx-auto" style="max-width: 900px;">
+      <div class="preview-chrome">
+        <span class="preview-dot"></span><span class="preview-dot"></span><span class="preview-dot"></span>
+      </div>
+      <div class="preview-body">
+        <div class="preview-kpis">
+          <div class="preview-kpi"><span class="l">Overall OEE</span><span class="v">84.2%</span></div>
+          <div class="preview-kpi"><span class="l">Units Produced</span><span class="v">18,430</span></div>
+          <div class="preview-kpi"><span class="l">Downtime (min)</span><span class="v">312</span></div>
+          <div class="preview-kpi"><span class="l">Open Alerts</span><span class="v">3</span></div>
+        </div>
+        <div class="preview-chart" aria-hidden="true">
+          <div class="preview-bar" style="height:55%;"></div>
+          <div class="preview-bar" style="height:72%;"></div>
+          <div class="preview-bar" style="height:40%;"></div>
+          <div class="preview-bar" style="height:88%;"></div>
+          <div class="preview-bar" style="height:64%;"></div>
+          <div class="preview-bar" style="height:78%;"></div>
+          <div class="preview-bar" style="height:50%;"></div>
+          <div class="preview-bar" style="height:92%;"></div>
+          <div class="preview-bar" style="height:60%;"></div>
+          <div class="preview-bar" style="height:70%;"></div>
+        </div>
+      </div>
+      <div class="preview-caption">DASHBOARD PREVIEW — CONNECT A DATA SOURCE TO GO LIVE</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= CTA ============================= -->
+<section class="section" id="cta">
+  <div class="container container-xl">
+    <div class="cta-band">
+      <h2>Ready to see your line in real time?</h2>
+      <p>Spin up the platform against your own SQL database, or explore the source on GitHub.</p>
+      <div class="hero-cta justify-content-center">
+        <a href="http://localhost:8000" target="_blank" rel="noopener" class="btn btn-primary-industrial">Launch the App</a>
+        <a href="https://github.com/serenity811ki-oss" target="_blank" rel="noopener" class="btn btn-outline-industrial">
+          <i class="bi bi-github me-1"></i> View on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= REPORTS TEASER ============================= -->
+<section class="section section-alt" id="reports">
+  <div class="container container-xl">
+    <div class="row align-items-center gy-4">
+      <div class="col-lg-6">
+        <span class="eyebrow">Reports &amp; export</span>
+        <h2>Numbers your team can take into a meeting.</h2>
+        <p class="lead-text">Generate CSV and Excel exports for any dataset, or a print-ready PDF OEE summary for leadership — filtered to the exact date range, line, or machine you need.</p>
+      </div>
+      <div class="col-lg-6">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="feature-card text-center py-4">
+              <i class="bi bi-filetype-csv fs-2" style="color:var(--teal-600);"></i>
+              <p class="mt-2 mb-0 fw-semibold" style="color:var(--slate-700);">CSV Export</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="feature-card text-center py-4">
+              <i class="bi bi-file-earmark-excel fs-2" style="color:var(--teal-600);"></i>
+              <p class="mt-2 mb-0 fw-semibold" style="color:var(--slate-700);">Excel Export</p>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="feature-card text-center py-4">
+              <i class="bi bi-file-earmark-pdf fs-2" style="color:var(--teal-600);"></i>
+              <p class="mt-2 mb-0 fw-semibold" style="color:var(--slate-700);">Printable PDF OEE Summary</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= FOOTER ============================= -->
+<footer class="site-footer" id="contact">
+  <div class="container container-xl">
+    <div class="row gy-4">
+      <div class="col-lg-4">
+        <div class="footer-brand">
+          <span class="brand-mark">SM</span>
+          <span class="brand-name" style="color:#fff;">SQL Manufacturing Platform</span>
+        </div>
+        <p style="font-size:13.5px; max-width:280px; color:var(--slate-400);">
+          Real-time, SQL-based manufacturing monitoring and analytics — OEE, downtime, and
+          predictive maintenance insight from your own production data.
+        </p>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-col-title">Platform</div>
+        <a class="footer-link" href="#dashboard">Dashboard</a>
+        <a class="footer-link" href="#analytics">Analytics</a>
+        <a class="footer-link" href="#reports">Reports</a>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-col-title">Company</div>
+        <a class="footer-link" href="#about">About</a>
+        <a class="footer-link" href="#contact">Contact</a>
+        <a class="footer-link" href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <div class="col-lg-4">
+        <div class="footer-col-title">Contact</div>
+        <a class="footer-link" href="mailto:hello@sqlmanufacturing.io"><i class="bi bi-envelope me-1"></i> hello@sqlmanufacturing.io</a>
+        <div class="social-links mt-3">
+          <a href="https://github.com/serenity811ki-oss" target="_blank" rel="noopener" aria-label="GitHub"><i class="bi bi-github"></i></a>
+          <a href="https://www.linkedin.com/in/kiss-istvan-a5072ab1/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+          <a href="https://x.com/stephenkis0" target="_blank" rel="noopener" aria-label="X (Twitter)"><i class="bi bi-twitter-x"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <hr class="footer-divider" />
+    <div class="footer-bottom">
+      <span>&copy; <span id="year"></span> SQL Manufacturing Monitoring Analytics Platform. All rights reserved.</span>
+      <span>Built with FastAPI · PostgreSQL · Chart.js</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // Close mobile nav after a link is tapped
+  document.querySelectorAll('#mainNav .nav-link').forEach(function (link) {
+    link.addEventListener('click', function () {
+      var nav = document.getElementById('mainNav');
+      if (nav.classList.contains('show')) {
+        bootstrap.Collapse.getOrCreateInstance(nav).hide();
+      }
+    });
+  });
+
+  // Highlight active section in nav on scroll
+  var sections = document.querySelectorAll('section[id]');
+  var navLinks = document.querySelectorAll('#mainNav .nav-link[href^="#"]');
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        navLinks.forEach(function (l) { l.classList.remove('active'); });
+        var active = document.querySelector('#mainNav .nav-link[href="#' + entry.target.id + '"]');
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  sections.forEach(function (s) { observer.observe(s); });
+
+  // Gentle live-panel number jitter — respects reduced-motion preference
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion) {
+    var unitsEl = document.getElementById('stat-units');
+    var base = 18430;
+    setInterval(function () {
+      base += Math.floor(Math.random() * 6);
+      unitsEl.textContent = base.toLocaleString();
+    }, 2600);
+  }
+</script>
+</body>
+</html>

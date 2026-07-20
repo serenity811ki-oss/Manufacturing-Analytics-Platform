@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Manufacturing Analytics Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ============================= LOGIN SCREEN ============================= -->
+<div id="login-screen" class="login-screen">
+  <div class="login-rail"></div>
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark">MA</div>
+      <div>
+        <div class="brand-name">Manufacturing Analytics Platform</div>
+        <div class="brand-sub">Plant Operations &amp; OEE Intelligence</div>
+      </div>
+    </div>
+    <form id="login-form">
+      <label class="field-label" for="login-username">Username</label>
+      <input id="login-username" class="field-input" type="text" autocomplete="username" required placeholder="admin" />
+
+      <label class="field-label" for="login-password">Password</label>
+      <input id="login-password" class="field-input" type="password" autocomplete="current-password" required placeholder="••••••••" />
+
+      <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+      <div id="login-error" class="login-error"></div>
+    </form>
+    <div class="login-demo">
+      <div class="login-demo-title">Demo credentials</div>
+      <div class="login-demo-row"><span>Admin</span><code>admin / Admin123!</code></div>
+      <div class="login-demo-row"><span>Manager</span><code>manager / Manager123!</code></div>
+      <div class="login-demo-row"><span>Technician</span><code>technician / Tech123!</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= APP SHELL ============================= -->
+<div id="app-shell" class="app-shell hidden">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">MA</div>
+      <div class="brand-name-sm">MAP</div>
+    </div>
+
+    <nav class="nav-groups" id="nav-groups">
+      <div class="nav-group-label">Overview</div>
+      <a class="nav-link active" data-view="production-dashboard">Production Dashboard</a>
+      <a class="nav-link" data-view="machine-performance">Machine Performance</a>
+      <a class="nav-link" data-view="oee">OEE</a>
+
+      <div class="nav-group-label">Reliability</div>
+      <a class="nav-link" data-view="downtime-analysis">Downtime Analysis</a>
+      <a class="nav-link" data-view="predictive-maintenance">Predictive Maintenance</a>
+      <a class="nav-link" data-view="maintenance-history">Maintenance History</a>
+      <a class="nav-link" data-view="failure-analysis">Failure Analysis</a>
+
+      <div class="nav-group-label">Performance</div>
+      <a class="nav-link" data-view="efficiency-reports">Efficiency Reports</a>
+      <a class="nav-link" data-view="shift-performance">Shift Performance</a>
+      <a class="nav-link" data-view="quality">Scrap &amp; Quality</a>
+
+      <div class="nav-group-label">Data</div>
+      <a class="nav-link" data-view="machines-admin">Machines &amp; Lines</a>
+      <a class="nav-link" data-view="reports">Reports &amp; Export</a>
+      <a class="nav-link" data-view="users-admin" id="nav-users-admin">Users</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div>
+          <div class="user-name" id="user-name">—</div>
+          <div class="user-role" id="user-role">—</div>
+        </div>
+      </div>
+      <button id="logout-btn" class="btn btn-ghost btn-block">Sign out</button>
+    </div>
+  </aside>
+
+  <div class="main-col">
+    <header class="topbar">
+      <button id="sidebar-toggle" class="icon-btn mobile-only" aria-label="Toggle navigation">☰</button>
+      <div class="topbar-title" id="view-title">Production Dashboard</div>
+
+      <div class="topbar-filters" id="global-filters">
+        <select id="filter-range" class="field-select">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last 12 months</option>
+        </select>
+        <select id="filter-line" class="field-select">
+          <option value="">All Lines</option>
+        </select>
+        <select id="filter-machine" class="field-select">
+          <option value="">All Machines</option>
+        </select>
+        <input id="filter-search" class="field-input filter-search" type="search" placeholder="Search…" />
+      </div>
+
+      <div class="topbar-status">
+        <span class="status-dot status-live"></span> Live
+      </div>
+    </header>
+
+    <main class="view-container" id="view-container">
+      <!-- Views injected by js/views.js -->
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="api.js"></script>
+<script src="charts.js"></script>
+<script src="views.js"></script>
+<script src="crud.js"></script>
+<script src="renderers.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
