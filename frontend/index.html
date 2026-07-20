@@ -484,7 +484,7 @@
    fails, the dashboard falls back to demo data and shows a banner.
    ===================================================================== */
 const CONFIG = {
-  API_BASE: "",   // same-origin by default, e.g. "http://localhost:8000"
+  API_BASE: "http://127.0.0.1:8000",   // local backend default; change if your backend runs elsewhere
   ENDPOINTS: {
     login:            "/api/auth/login",              // POST {username,password} -> Token
     kpiSummary:       "/api/dashboard/kpi-summary",    // GET -> KPISummary
@@ -500,10 +500,6 @@ const CONFIG = {
 let AUTH_TOKEN = null;
 let CURRENT_USER = null;
 let USING_DEMO = false;
-const VALID_CREDENTIALS = {
-  username: 'admin',
-  password: 'Admin123!'
-};
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -525,15 +521,15 @@ $('#loginForm').addEventListener('submit', async (e) => {
   const err = $('#loginError');
   err.textContent = '';
 
-  if(username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password){
-    AUTH_TOKEN = 'local-admin-token';
-    CURRENT_USER = { username, role: 'admin' };
+  try {
+    const tokenResponse = await apiPost(CONFIG.ENDPOINTS.login, { username, password });
+    AUTH_TOKEN = tokenResponse.access_token;
+    CURRENT_USER = { username: tokenResponse.username, role: tokenResponse.role };
     USING_DEMO = false;
     enterDashboard();
-    return;
+  } catch (loginError) {
+    err.textContent = loginError.message || 'Sign-in failed — check the username/password, or use demo data below.';
   }
-
-  err.textContent = 'Sign-in failed — check the username/password, or use demo data below.';
 });
 
 $('#demoBtn').addEventListener('click', () => {
@@ -561,9 +557,52 @@ async function apiGet(path, params){
   if(USING_DEMO) throw new Error('demo mode');
   const url = new URL(CONFIG.API_BASE + path, window.location.origin);
   if(params) Object.entries(params).forEach(([k,v]) => { if(v !== undefined && v !== null) url.searchParams.set(k,v); });
-  const res = await fetch(url.toString(), { headers: authHeaders() });
-  if(!res.ok) throw new Error('request failed: ' + path);
-  return res.json();
+  try {
+    const res = await fetch(url.toString(), { headers: authHeaders() });
+    if(!res.ok) {
+      let message = `request failed: ${path} (${res.status})`;
+      try {
+        const errorBody = await res.json();
+        if (errorBody?.detail) message = `${message} - ${errorBody.detail}`;
+        else if (errorBody?.message) message = `${message} - ${errorBody.message}`;
+      } catch {}
+      throw new Error(message);
+    }
+    return res.json();
+  } catch (err) {
+    throw new Error(`request failed: ${path} (${err.message})`);
+  }
+}
+
+async function apiPost(path, bodyData){
+  if(USING_DEMO) throw new Error('demo mode');
+  const url = new URL(CONFIG.API_BASE + path, window.location.origin);
+  const body = new URLSearchParams();
+  Object.entries(bodyData || {}).forEach(([k,v]) => {
+    if(v !== undefined && v !== null) body.set(k, v);
+  });
+  try {
+    const res = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        ...authHeaders(),
+      },
+      body: body.toString(),
+    });
+    if(!res.ok){
+      let message = `request failed: ${path} (${res.status})`;
+      try {
+        const errorBody = await res.json();
+        if (errorBody?.detail) message = `${message} - ${errorBody.detail}`;
+        else if (errorBody?.message) message = `${message} - ${errorBody.message}`;
+      } catch {}
+      throw new Error(message);
+    }
+    return res.json();
+  } catch (err) {
+    throw new Error(`request failed: ${path} (${err.message})`);
+  }
 }
 
 /* ---------------------------- Enter dashboard ---------------------------- */
