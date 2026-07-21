@@ -1,7 +1,7 @@
 # Manufacturing Analytics Platform
 log in code 
 Username and Password
- Admin- admin / Admin123! 
+ Ask on stephen.kiss.business@gmail.com
 
 
 An enterprise-grade manufacturing analytics system with a FastAPI + PostgreSQL
